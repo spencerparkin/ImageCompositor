@@ -28,6 +28,9 @@
     <ClCompile Include="Source\icProject.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\icAnchor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\icApp.h">
@@ -49,6 +52,9 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="Source\icNode.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\icAnchor.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,5 +1,6 @@
 #include "icNode.h"
 #include "icCanvas.h"
+#include "icAnchor.h"
 #include <wx/image.h>
 #include <gl/GLU.h>
 
@@ -145,45 +146,59 @@ void icNode::AssignImage(const wxString& imagePath)
 	}
 }
 
-void icNode::ForEachLeaf(const icRectangle& worldRect, std::function<void(icNode*, const icRectangle&)> visitationFunc)
+void icNode::Layout(const icRectangle& worldRect)
 {
-	if (!this->childNodeMatrix)
-		visitationFunc(this, worldRect);
-	else
+	this->worldRect = worldRect;
+
+	float vLerpMin = 0.0f;
+	float vLerpMax = 0.0f;
+
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
 	{
-		float vLerpMin = 0.0f;
-		float vLerpMax = 0.0f;
+		float vProportion = this->childVProportionArray[i];
+		vLerpMax = vLerpMin + vProportion;
 
-		for (int i = 0; i < this->childNodeMatrixRows; i++)
+		float hLerpMin = 0.0f;
+		float hLerpMax = 0.0f;
+
+		for (int j = 0; j < this->childNodeMatrixCols; j++)
 		{
-			float vProportion = this->childVProportionArray[i];
-			vLerpMax = vLerpMin + vProportion;
+			float hProportion = this->childHProportionArray[j];
+			hLerpMax = hLerpMin + hProportion;
 
-			float hLerpMin = 0.0f;
-			float hLerpMax = 0.0f;
+			icRectangle childRect;
+			childRect.min = worldRect.Lerp(hLerpMin, vLerpMin);
+			childRect.max = worldRect.Lerp(hLerpMax, vLerpMax);
 
-			for (int j = 0; j < this->childNodeMatrixCols; j++)
-			{
-				float hProportion = this->childHProportionArray[j];
-				hLerpMax = hLerpMin + hProportion;
+			icNode* childNode = this->childNodeMatrix[i][j];
+			childNode->Layout(childRect);
 
-				icRectangle childRect;
-				childRect.min = worldRect.Lerp(hLerpMin, vLerpMin);
-				childRect.max = worldRect.Lerp(hLerpMax, vLerpMax);
-
-				icNode* childNode = this->childNodeMatrix[i][j];
-				childNode->ForEachLeaf(childRect, visitationFunc);
-
-				hLerpMin = hLerpMax;
-			}
-
-			vLerpMin = vLerpMax;
+			hLerpMin = hLerpMax;
 		}
+
+		vLerpMin = vLerpMax;
 	}
 }
 
-void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const
+bool icNode::ForEachNode(std::function<bool(icNode*)> visitationFunc)
 {
+	if (!visitationFunc(this))
+		return false;
+	
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
+		for (int j = 0; j < this->childNodeMatrixCols; j++)
+			if (!this->childNodeMatrix[i][j]->ForEachNode(visitationFunc))
+				return false;
+
+	return true;
+}
+
+void icNode::Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect)
+{
+	// Only leaf nodes are rendered.
+	if (this->childNodeMatrix)
+		return;
+
 	if (this->texture != GL_INVALID_VALUE)
 	{
 		glEnable(GL_TEXTURE_2D);
@@ -202,16 +217,16 @@ void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRec
 	uvRect.min += this->uvDelta;
 	uvRect.max += this->uvDelta;
 
-	icRectangle imageRect(worldRect);
+	icRectangle imageRect(this->worldRect);
 	imageRect.ExpandToMatchAspectRatio(this->imageAspectRatio);
 		
 	icRectangle clipRect;
 	float xLerp, yLerp;
 
-	viewportWorldRect.Lerp(worldRect.min, xLerp, yLerp);
+	viewportWorldRect.Lerp(this->worldRect.min, xLerp, yLerp);
 	clipRect.min = viewportRect.Lerp(xLerp, yLerp);
 
-	viewportWorldRect.Lerp(worldRect.max, xLerp, yLerp);
+	viewportWorldRect.Lerp(this->worldRect.max, xLerp, yLerp);
 	clipRect.max = viewportRect.Lerp(xLerp, yLerp);
 
 	clipRect.min.x = ::floorf(clipRect.min.x);
@@ -260,4 +275,39 @@ void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRec
 	{
 		glDisable(GL_TEXTURE_2D);
 	}
+}
+
+icAnchor* icNode::Pick(const icVector& worldPoint, float edgeThickness, const icAnchor* tentativeAnchor)
+{
+	if (dynamic_cast<const icEdgeAnchor*>(tentativeAnchor))
+		return nullptr;
+
+	if (this->worldRect.ContainsPoint(worldPoint))
+	{
+		float vLerp = 0.0f;
+		for (int i = 0; i < this->childNodeMatrixRows; i++)
+		{
+			vLerp += this->childVProportionArray[i];
+			icVector edgePoint = this->worldRect.Lerp(0.0f, vLerp);
+			edgePoint.x = worldPoint.x;
+			if ((worldPoint - edgePoint).Length() <= edgeThickness)
+				return new icEdgeAnchor(this, i, icEdgeAnchor::VERTICAL);
+		}
+
+		float hLerp = 0.0f;
+		for (int i = 0; i < this->childNodeMatrixCols; i++)
+		{
+			hLerp += this->childHProportionArray[i];
+			icVector edgePoint = this->worldRect.Lerp(hLerp, 0.0f);
+			edgePoint.y = worldPoint.y;
+			if ((worldPoint - edgePoint).Length() <= edgeThickness)
+				return new icEdgeAnchor(this, i, icEdgeAnchor::HORIZONTAL);
+		}
+
+		const icNodeAnchor* nodeAnchor = dynamic_cast<const icNodeAnchor*>(tentativeAnchor);
+		if (!nodeAnchor || nodeAnchor->node->worldRect.CalcArea() > this->worldRect.CalcArea())
+			return new icNodeAnchor(this);
+	}
+
+	return nullptr;
 }

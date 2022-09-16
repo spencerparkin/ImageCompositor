@@ -13,11 +13,11 @@ public:
 
 	float CalcWidth() const;
 	float CalcHeight() const;
+	float CalcArea() const;
+	float CalcAspectRatio() const;
 
 	bool ContainsPoint(const icVector& point) const;
-
-	// Return the width-to-heigh ratio of this rectangle.
-	float CalcAspectRatio() const;
+	bool BorderContainsPoint(const icVector& point, float edgeThickness) const;
 
 	// Keeping the center of the rectangle constant, make the rectangle larger width-wise or height-wise to match the given aspect ratio.
 	void ExpandToMatchAspectRatio(float aspectRatio);

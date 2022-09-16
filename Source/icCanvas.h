@@ -2,6 +2,9 @@
 
 #include <wx/glcanvas.h>
 
+class icRectangle;
+class icAnchor;
+
 // TODO: I want to support drag-and-drop of images into the canvas regions.
 //       There should also be a way to select in the canvas region for various reasons.
 //       E.g., you should be able to click and drag on a border or intersection to move it,
@@ -17,8 +20,13 @@ public:
 
 	void OnPaint(wxPaintEvent& event);
 	void OnSize(wxSizeEvent& event);
+	void OnMouseMotion(wxMouseEvent& event);
+
+	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
 
 	static int attributeList[];
 
 	wxGLContext* renderContext;
+
+	icAnchor* anchor;
 };

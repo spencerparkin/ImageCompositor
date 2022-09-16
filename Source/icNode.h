@@ -3,6 +3,8 @@
 #include "icRectangle.h"
 #include <wx/string.h>
 
+class icAnchor;
+
 class icNode
 {
 public:
@@ -20,9 +22,13 @@ public:
 	void ZoomUVs(float zoomFactor);
 	void AssignImage(const wxString& imagePath);
 
-	void ForEachLeaf(const icRectangle& worldRect, std::function<void(icNode*, const icRectangle&)> visitationFunc);
+	void Layout(const icRectangle& worldRect);
 
-	void Render(const icRectangle& worldRect, const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const;
+	bool ForEachNode(std::function<bool(icNode*)> visitationFunc);
+
+	void Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect);
+
+	icAnchor* Pick(const icVector& worldPoint, float edgeThickness, const icAnchor* tentativeAnchor);
 
 	icNode*** childNodeMatrix;
 	int childNodeMatrixRows;
@@ -33,5 +39,6 @@ public:
 	float uvScale;
 	wxString imagePath;
 	float imageAspectRatio;
-	mutable unsigned int texture;
+	unsigned int texture;
+	icRectangle worldRect;
 };

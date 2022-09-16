@@ -11,6 +11,10 @@ public:
 	icVector(float x, float y);
 	virtual ~icVector();
 
+	float Length() const;
+	float Dot(const icVector& vec) const;
+	float Cross(const icVector& vec) const;
+
 	icVector Lerp(const icVector& vecA, const icVector& vecB, float lerpValue);
 
 	void operator+=(const icVector& vec);

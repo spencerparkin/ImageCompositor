@@ -2,21 +2,49 @@
 #include "icRectangle.h"
 #include "icApp.h"
 #include "icProject.h"
+#include "icAnchor.h"
 #include <gl/GLU.h>
 
 int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
 
 icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeList, wxDefaultPosition, wxDefaultSize)
 {
+	this->anchor = nullptr;
+
 	this->renderContext = new wxGLContext(this);
 
 	this->Bind(wxEVT_PAINT, &icCanvas::OnPaint, this);
 	this->Bind(wxEVT_SIZE, &icCanvas::OnSize, this);
+	this->Bind(wxEVT_MOTION, &icCanvas::OnMouseMotion, this);
 }
 
 /*virtual*/ icCanvas::~icCanvas()
 {
 	delete this->renderContext;
+	delete this->anchor;
+}
+
+void icCanvas::CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect)
+{
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	viewportRect.min.x = viewport[0];
+	viewportRect.max.x = viewport[0] + viewport[2];
+	viewportRect.min.y = viewport[1];
+	viewportRect.max.y = viewport[1] + viewport[3];
+
+	if (wxGetApp().project)
+		viewportWorldRect = wxGetApp().project->frameRect;
+	else
+	{
+		viewportWorldRect.min.x = -10.0f;
+		viewportWorldRect.max.x = 10.0f;
+		viewportWorldRect.min.y = -10.0f;
+		viewportWorldRect.max.y = 10.0f;
+	}
+
+	float viewportAspectRatio = viewportRect.CalcAspectRatio();
+	viewportWorldRect.ExpandToMatchAspectRatio(viewportAspectRatio);
 }
 
 void icCanvas::OnPaint(wxPaintEvent& event)
@@ -29,16 +57,8 @@ void icCanvas::OnPaint(wxPaintEvent& event)
 	glShadeModel(GL_SMOOTH);
 	glDisable(GL_DEPTH_TEST);
 
-	GLint viewport[4];
-	glGetIntegerv(GL_VIEWPORT, viewport);
-	icRectangle viewportRect(viewport[0], viewport[0] + viewport[2], viewport[1], viewport[1] + viewport[3]);
-	float aspectRatio = viewportRect.CalcAspectRatio();
-
-	icRectangle viewportWorldRect(-10.0f, 10.0f, -10.0f, 10.0f);
-	if (wxGetApp().project)
-		viewportWorldRect = wxGetApp().project->frameRect;
-
-	viewportWorldRect.ExpandToMatchAspectRatio(aspectRatio);
+	icRectangle viewportRect, viewportWorldRect;
+	this->CalcViewportRectangles(viewportRect, viewportWorldRect);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -48,7 +68,12 @@ void icCanvas::OnPaint(wxPaintEvent& event)
 	glLoadIdentity();
 
 	if (wxGetApp().project)
+	{
 		wxGetApp().project->Render(viewportRect, viewportWorldRect);
+
+		if (this->anchor)
+			this->anchor->Render();
+	}
 
 	glFlush();
 
@@ -63,4 +88,24 @@ void icCanvas::OnSize(wxSizeEvent& event)
 	glViewport(0, 0, size.GetWidth(), size.GetHeight());
 
 	this->Refresh();
+}
+
+void icCanvas::OnMouseMotion(wxMouseEvent& event)
+{
+	if (wxGetApp().project)
+	{
+		icVector viewportMousePoint(event.GetPosition().x, event.GetPosition().y);
+
+		icRectangle viewportRect, viewportWorldRect;
+		this->CalcViewportRectangles(viewportRect, viewportWorldRect);
+
+		float xLerp, yLerp;
+		viewportRect.Lerp(viewportMousePoint, xLerp, yLerp);
+		icVector worldMousePoint = viewportWorldRect.Lerp(xLerp, 1.0f - yLerp);
+
+		delete this->anchor;
+		this->anchor = wxGetApp().project->Pick(worldMousePoint);
+
+		this->Refresh();
+	}
 }

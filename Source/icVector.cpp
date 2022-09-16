@@ -1,4 +1,5 @@
 #include "icVector.h"
+#include <math.h>
 
 icVector::icVector()
 {
@@ -14,6 +15,21 @@ icVector::icVector(float x, float y)
 
 /*virtual*/ icVector::~icVector()
 {
+}
+
+float icVector::Length() const
+{
+	return ::sqrtf(this->Dot(*this));
+}
+
+float icVector::Dot(const icVector& vec) const
+{
+	return this->x * vec.x + this->y * vec.y;
+}
+
+float icVector::Cross(const icVector& vec) const
+{
+	return this->x * vec.y - this->y * vec.x;
 }
 
 icVector icVector::Lerp(const icVector& vecA, const icVector& vecB, float lerpValue)

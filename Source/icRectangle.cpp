@@ -38,6 +38,16 @@ float icRectangle::CalcHeight() const
 	return this->max.y - this->min.y;
 }
 
+float icRectangle::CalcArea() const
+{
+	return this->CalcWidth() * this->CalcHeight();
+}
+
+float icRectangle::CalcAspectRatio() const
+{
+	return this->CalcWidth() / this->CalcHeight();
+}
+
 bool icRectangle::ContainsPoint(const icVector& point) const
 {
 	if (this->min.x <= point.x && point.x <= this->max.x &&
@@ -49,9 +59,22 @@ bool icRectangle::ContainsPoint(const icVector& point) const
 	return false;
 }
 
-float icRectangle::CalcAspectRatio() const
+bool icRectangle::BorderContainsPoint(const icVector& point, float edgeThickness) const
 {
-	return this->CalcWidth() / this->CalcHeight();
+	icRectangle innerRect(*this);
+	icRectangle outerRect(*this);
+
+	innerRect.min.x += edgeThickness / 2.0f;
+	innerRect.max.x -= edgeThickness / 2.0f;
+	innerRect.min.y += edgeThickness / 2.0f;
+	innerRect.max.y -= edgeThickness / 2.0f;
+
+	outerRect.min.x -= edgeThickness / 2.0f;
+	outerRect.max.x += edgeThickness / 2.0f;
+	outerRect.min.y -= edgeThickness / 2.0f;
+	outerRect.max.y += edgeThickness / 2.0f;
+
+	return outerRect.ContainsPoint(point) && !innerRect.ContainsPoint(point);
 }
 
 void icRectangle::ExpandToMatchAspectRatio(float aspectRatio)
