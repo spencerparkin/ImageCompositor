@@ -21,8 +21,10 @@ public:
 	void OnPaint(wxPaintEvent& event);
 	void OnSize(wxSizeEvent& event);
 	void OnMouseMotion(wxMouseEvent& event);
+	void OnFilesDropped(wxDropFilesEvent& event);
 
 	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
+	void UpdateAnchor(const wxPoint& mousePoint);
 
 	static int attributeList[];
 

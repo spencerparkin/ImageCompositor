@@ -3,6 +3,7 @@
 #include "icApp.h"
 #include "icProject.h"
 #include "icAnchor.h"
+#include "icNode.h"
 #include <gl/GLU.h>
 
 int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
@@ -16,6 +17,9 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_PAINT, &icCanvas::OnPaint, this);
 	this->Bind(wxEVT_SIZE, &icCanvas::OnSize, this);
 	this->Bind(wxEVT_MOTION, &icCanvas::OnMouseMotion, this);
+	this->Bind(wxEVT_DROP_FILES, &icCanvas::OnFilesDropped, this);
+
+	this->DragAcceptFiles(true);
 }
 
 /*virtual*/ icCanvas::~icCanvas()
@@ -90,22 +94,41 @@ void icCanvas::OnSize(wxSizeEvent& event)
 	this->Refresh();
 }
 
+void icCanvas::UpdateAnchor(const wxPoint& mousePoint)
+{
+	icVector viewportMousePoint(mousePoint.x, mousePoint.y);
+
+	icRectangle viewportRect, viewportWorldRect;
+	this->CalcViewportRectangles(viewportRect, viewportWorldRect);
+
+	float xLerp, yLerp;
+	viewportRect.Lerp(viewportMousePoint, xLerp, yLerp);
+	icVector worldMousePoint = viewportWorldRect.Lerp(xLerp, 1.0f - yLerp);
+
+	delete this->anchor;
+	this->anchor = wxGetApp().project->Pick(worldMousePoint);
+}
+
 void icCanvas::OnMouseMotion(wxMouseEvent& event)
 {
 	if (wxGetApp().project)
 	{
-		icVector viewportMousePoint(event.GetPosition().x, event.GetPosition().y);
-
-		icRectangle viewportRect, viewportWorldRect;
-		this->CalcViewportRectangles(viewportRect, viewportWorldRect);
-
-		float xLerp, yLerp;
-		viewportRect.Lerp(viewportMousePoint, xLerp, yLerp);
-		icVector worldMousePoint = viewportWorldRect.Lerp(xLerp, 1.0f - yLerp);
-
-		delete this->anchor;
-		this->anchor = wxGetApp().project->Pick(worldMousePoint);
-
+		this->UpdateAnchor(event.GetPosition());
 		this->Refresh();
+	}
+}
+
+void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
+{
+	if (wxGetApp().project && event.GetNumberOfFiles() == 1)
+	{
+		this->UpdateAnchor(event.GetPosition());
+
+		icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+		if (nodeAnchor)
+		{
+			nodeAnchor->node->AssignImage(event.GetFiles()[0]);
+			this->Refresh();
+		}
 	}
 }
