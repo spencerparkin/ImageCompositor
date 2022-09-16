@@ -1,0 +1,5 @@
+# Ignore stuff...
+.vs/
+Debug/
+Release/
+*.user
