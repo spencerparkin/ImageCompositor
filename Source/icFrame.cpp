@@ -98,6 +98,22 @@ void icFrame::OnGenerateImage(wxCommandEvent& event)
 
 void icFrame::OnUpdateMenuItemUI(wxUpdateUIEvent& event)
 {
+	switch (event.GetId())
+	{
+		case ID_GenerateImage:
+		case ID_SaveProject:
+		case ID_CloseProject:
+		{
+			event.Enable(wxGetApp().project != nullptr);
+			break;
+		}
+		case ID_NewProject:
+		case ID_OpenProject:
+		{
+			event.Enable(wxGetApp().project == nullptr);
+			break;
+		}
+	}
 }
 
 void icFrame::OnClose(wxCloseEvent& event)

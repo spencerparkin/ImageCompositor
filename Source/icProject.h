@@ -1,5 +1,7 @@
 #pragma once
 
+#include "icRectangle.h"
+
 class icNode;
 class icRectangle;
 
@@ -9,7 +11,8 @@ public:
 	icProject();
 	virtual ~icProject();
 
-	void Render(const icRectangle& worldRect, const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const;
+	void Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const;
 
 	icNode* rootNode;
+	icRectangle frameRect;
 };

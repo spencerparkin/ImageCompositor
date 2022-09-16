@@ -145,10 +145,11 @@ void icNode::AssignImage(const wxString& imagePath)
 	}
 }
 
-// TODO: This recursive iteration needs to be abstracted so that it can be used in other contexts.
-void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const
+void icNode::ForEachLeaf(const icRectangle& worldRect, std::function<void(icNode*, const icRectangle&)> visitationFunc)
 {
-	if (this->childNodeMatrix)
+	if (!this->childNodeMatrix)
+		visitationFunc(this, worldRect);
+	else
 	{
 		float vLerpMin = 0.0f;
 		float vLerpMax = 0.0f;
@@ -171,7 +172,7 @@ void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRec
 				childRect.max = worldRect.Lerp(hLerpMax, vLerpMax);
 
 				icNode* childNode = this->childNodeMatrix[i][j];
-				childNode->Render(childRect, viewportRect, viewportWorldRect);
+				childNode->ForEachLeaf(childRect, visitationFunc);
 
 				hLerpMin = hLerpMax;
 			}
@@ -179,68 +180,84 @@ void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRec
 			vLerpMin = vLerpMax;
 		}
 	}
-	else
+}
+
+void icNode::Render(const icRectangle& worldRect, const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const
+{
+	if (this->texture != GL_INVALID_VALUE)
 	{
-		if (this->texture != GL_INVALID_VALUE)
-		{
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, this->texture);
-		}
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, this->texture);
+	}
 
-		icRectangle uvRect;
-		uvRect.min.x = 0.0f;
-		uvRect.min.y = 0.0f;
-		uvRect.max.x = 1.0f;
-		uvRect.max.y = 1.0f;
+	icRectangle uvRect;
+	uvRect.min.x = 0.0f;
+	uvRect.min.y = 0.0f;
+	uvRect.max.x = 1.0f;
+	uvRect.max.y = 1.0f;
 
-		uvRect.min *= this->uvScale;
-		uvRect.max *= this->uvScale;
+	uvRect.min *= this->uvScale;
+	uvRect.max *= this->uvScale;
 
-		uvRect.min += this->uvDelta;
-		uvRect.max += this->uvDelta;
+	uvRect.min += this->uvDelta;
+	uvRect.max += this->uvDelta;
 
-		icRectangle imageRect(worldRect);
-		imageRect.ExpandToMatchAspectRatio(this->imageAspectRatio);
+	icRectangle imageRect(worldRect);
+	imageRect.ExpandToMatchAspectRatio(this->imageAspectRatio);
 		
-		icRectangle clipRect;
-		float xLerp, yLerp;
+	icRectangle clipRect;
+	float xLerp, yLerp;
 
-		viewportWorldRect.Lerp(worldRect.min, xLerp, yLerp);
-		clipRect.min = viewportRect.Lerp(xLerp, yLerp);
+	viewportWorldRect.Lerp(worldRect.min, xLerp, yLerp);
+	clipRect.min = viewportRect.Lerp(xLerp, yLerp);
 
-		viewportWorldRect.Lerp(worldRect.max, xLerp, yLerp);
-		clipRect.max = viewportRect.Lerp(xLerp, yLerp);
+	viewportWorldRect.Lerp(worldRect.max, xLerp, yLerp);
+	clipRect.max = viewportRect.Lerp(xLerp, yLerp);
 
-		clipRect.min.x = ::roundf(clipRect.min.x);
-		clipRect.min.y = ::roundf(clipRect.min.y);
-		clipRect.max.x = ::roundf(clipRect.max.x);
-		clipRect.max.y = ::roundf(clipRect.max.y);
+	clipRect.min.x = ::floorf(clipRect.min.x);
+	clipRect.min.y = ::floorf(clipRect.min.y);
+	clipRect.max.x = ::ceilf(clipRect.max.x);
+	clipRect.max.y = ::ceilf(clipRect.max.y);
 
-		glScissor(GLuint(clipRect.min.x), GLuint(clipRect.min.y), GLuint(clipRect.CalcWidth()), GLuint(clipRect.CalcHeight()));
+	glScissor(GLuint(clipRect.min.x), GLuint(clipRect.min.y), GLuint(clipRect.CalcWidth()), GLuint(clipRect.CalcHeight()));
 
-		glBegin(GL_QUADS);
+	glBegin(GL_QUADS);
 
-		//glColor3f(1.0f, 0.0f, 0.0f);
+	if (this->texture != GL_INVALID_VALUE)
+	{
+		glColor3f(1.0f, 1.0f, 1.0f);
+
 		glTexCoord2f(uvRect.min.x, uvRect.min.y);
 		glVertex2f(imageRect.min.x, imageRect.min.y);
-		
-		//glColor3f(0.0f, 1.0f, 0.0f);
+
 		glTexCoord2f(uvRect.max.x, uvRect.min.y);
 		glVertex2f(imageRect.max.x, imageRect.min.y);
-		
-		//glColor3f(0.0f, 0.0f, 1.0f);
+
 		glTexCoord2f(uvRect.max.x, uvRect.max.y);
 		glVertex2f(imageRect.max.x, imageRect.max.y);
-		
-		//glColor3f(1.0f, 1.0f, 0.0f);
+
 		glTexCoord2f(uvRect.min.x, uvRect.max.y);
 		glVertex2f(imageRect.min.x, imageRect.max.y);
+	}
+	else
+	{
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex2f(imageRect.min.x, imageRect.min.y);
 
-		glEnd();
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex2f(imageRect.max.x, imageRect.min.y);
 
-		if (this->texture != GL_INVALID_VALUE)
-		{
-			glDisable(GL_TEXTURE_2D);
-		}
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex2f(imageRect.max.x, imageRect.max.y);
+
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glVertex2f(imageRect.min.x, imageRect.max.y);
+	}
+
+	glEnd();
+
+	if (this->texture != GL_INVALID_VALUE)
+	{
+		glDisable(GL_TEXTURE_2D);
 	}
 }

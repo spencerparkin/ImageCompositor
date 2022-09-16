@@ -23,7 +23,7 @@ void icCanvas::OnPaint(wxPaintEvent& event)
 {
 	this->SetCurrent(*this->renderContext);
 
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glShadeModel(GL_SMOOTH);
@@ -35,6 +35,9 @@ void icCanvas::OnPaint(wxPaintEvent& event)
 	float aspectRatio = viewportRect.CalcAspectRatio();
 
 	icRectangle viewportWorldRect(-10.0f, 10.0f, -10.0f, 10.0f);
+	if (wxGetApp().project)
+		viewportWorldRect = wxGetApp().project->frameRect;
+
 	viewportWorldRect.ExpandToMatchAspectRatio(aspectRatio);
 
 	glMatrixMode(GL_PROJECTION);
@@ -45,11 +48,7 @@ void icCanvas::OnPaint(wxPaintEvent& event)
 	glLoadIdentity();
 
 	if (wxGetApp().project)
-	{
-		// TODO: May want the initial world rect to be something other than the viewport world rectangle.
-		//       E.g., the user may want to maintain a size/aspect-ratio for the entire composite image.
-		wxGetApp().project->Render(viewportWorldRect, viewportRect, viewportWorldRect);
-	}
+		wxGetApp().project->Render(viewportRect, viewportWorldRect);
 
 	glFlush();
 

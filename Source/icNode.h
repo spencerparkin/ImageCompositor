@@ -20,6 +20,8 @@ public:
 	void ZoomUVs(float zoomFactor);
 	void AssignImage(const wxString& imagePath);
 
+	void ForEachLeaf(const icRectangle& worldRect, std::function<void(icNode*, const icRectangle&)> visitationFunc);
+
 	void Render(const icRectangle& worldRect, const icRectangle& viewportRect, const icRectangle& viewportWorldRect) const;
 
 	icNode*** childNodeMatrix;
