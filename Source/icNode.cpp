@@ -285,7 +285,7 @@ icAnchor* icNode::Pick(const icVector& worldPoint, float edgeThickness, const ic
 	if (this->worldRect.ContainsPoint(worldPoint))
 	{
 		float vLerp = 0.0f;
-		for (int i = 0; i < this->childNodeMatrixRows; i++)
+		for (int i = 0; i < this->childNodeMatrixRows - 1; i++)
 		{
 			vLerp += this->childVProportionArray[i];
 			icVector edgePoint = this->worldRect.Lerp(0.0f, vLerp);
@@ -295,7 +295,7 @@ icAnchor* icNode::Pick(const icVector& worldPoint, float edgeThickness, const ic
 		}
 
 		float hLerp = 0.0f;
-		for (int i = 0; i < this->childNodeMatrixCols; i++)
+		for (int i = 0; i < this->childNodeMatrixCols - 1; i++)
 		{
 			hLerp += this->childHProportionArray[i];
 			icVector edgePoint = this->worldRect.Lerp(hLerp, 0.0f);

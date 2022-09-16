@@ -13,11 +13,12 @@ icProject::icProject()
 	this->rootNode = new icNode();
 
 	// DEBUG: Create a non-trivial tree to begin with rather than a vacuous one.
-	this->rootNode->Split(1, 2);
+	/*this->rootNode->Split(1, 2);
 	this->rootNode->childNodeMatrix[0][0]->AssignImage("H:\\git_repos\\ImageCompositor\\SampleImages\\BabyDuck.jpg");
 	this->rootNode->childNodeMatrix[0][1]->Split(2, 1);
 	this->rootNode->childNodeMatrix[0][1]->childNodeMatrix[0][0]->AssignImage("H:\\git_repos\\ImageCompositor\\SampleImages\\BabyGerrafe.jpg");
 	//this->rootNode->childNodeMatrix[0][1]->childNodeMatrix[1][0]->AssignImage("H:\\git_repos\\ImageCompositor\\SampleImages\\BabyPanda.jpg");
+	*/
 }
 
 /*virtual*/ icProject::~icProject()

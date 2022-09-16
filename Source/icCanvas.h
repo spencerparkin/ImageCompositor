@@ -18,10 +18,23 @@ public:
 	icCanvas(wxWindow* parent);
 	virtual ~icCanvas();
 
+	enum
+	{
+		ID_ContextMenu_SplitVertical = wxID_HIGHEST + 1000,
+		ID_ContextMenu_SplitHorizontal,
+		ID_ContextMenu_SplitCustom,
+		ID_ContextMenu_Collapse
+	};
+
 	void OnPaint(wxPaintEvent& event);
 	void OnSize(wxSizeEvent& event);
 	void OnMouseMotion(wxMouseEvent& event);
 	void OnFilesDropped(wxDropFilesEvent& event);
+	void OnContextMenu(wxContextMenuEvent& event);
+	void OnContextMenu_SplitVertical(wxCommandEvent& event);
+	void OnContextMenu_SplitHorizontal(wxCommandEvent& event);
+	void OnContextMenu_SplitCustom(wxCommandEvent& event);
+	void OnContextMenu_Collapse(wxCommandEvent& event);
 
 	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
 	void UpdateAnchor(const wxPoint& mousePoint);

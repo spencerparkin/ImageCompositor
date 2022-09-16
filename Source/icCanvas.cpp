@@ -4,6 +4,7 @@
 #include "icProject.h"
 #include "icAnchor.h"
 #include "icNode.h"
+#include <wx/menu.h>
 #include <gl/GLU.h>
 
 int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
@@ -18,6 +19,11 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_SIZE, &icCanvas::OnSize, this);
 	this->Bind(wxEVT_MOTION, &icCanvas::OnMouseMotion, this);
 	this->Bind(wxEVT_DROP_FILES, &icCanvas::OnFilesDropped, this);
+	this->Bind(wxEVT_CONTEXT_MENU, &icCanvas::OnContextMenu, this);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitVertical, this, ID_ContextMenu_SplitVertical);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitHorizontal, this, ID_ContextMenu_SplitHorizontal);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitCustom, this, ID_ContextMenu_SplitCustom);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_Collapse, this, ID_ContextMenu_Collapse);
 
 	this->DragAcceptFiles(true);
 }
@@ -130,5 +136,80 @@ void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
 			nodeAnchor->node->AssignImage(event.GetFiles()[0]);
 			this->Refresh();
 		}
+	}
+}
+
+void icCanvas::OnContextMenu(wxContextMenuEvent& event)
+{
+	if (wxGetApp().project)
+	{
+		wxPoint mousePoint = wxGetMousePosition();
+		mousePoint = this->ScreenToClient(mousePoint);
+		this->UpdateAnchor(mousePoint);
+
+		if (this->anchor)
+		{
+			wxMenu contextMenu;
+
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitVertical, "Split Vertical", "Split the region into an upper cell and a lower cell."));
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitHorizontal, "Split Horizontal", "Split the region into a left cell and a right cell."));
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitCustom, "Split Custom", "Split the region into a given matrix of cells."));
+			contextMenu.AppendSeparator();
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_Collapse, "Collapse", "Collapse the region split by the given edge."));
+
+			bool canSplit = (dynamic_cast<icNodeAnchor*>(this->anchor) ? true : false);
+			bool canCollapse = (dynamic_cast<icEdgeAnchor*>(this->anchor) ? true : false);
+
+			contextMenu.FindItem(ID_ContextMenu_SplitVertical)->Enable(canSplit);
+			contextMenu.FindItem(ID_ContextMenu_SplitHorizontal)->Enable(canSplit);
+			contextMenu.FindItem(ID_ContextMenu_SplitCustom)->Enable(canSplit);
+			contextMenu.FindItem(ID_ContextMenu_Collapse)->Enable(canCollapse);
+
+			this->PopupMenu(&contextMenu, mousePoint);
+
+			this->Refresh();
+		}
+	}
+}
+
+void icCanvas::OnContextMenu_SplitVertical(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+	{
+		nodeAnchor->node->Split(2, 1);
+		wxGetApp().project->layoutDirty = true;
+		delete this->anchor;
+		this->anchor = nullptr;
+	}
+}
+
+void icCanvas::OnContextMenu_SplitHorizontal(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+	{
+		nodeAnchor->node->Split(1, 2);
+		wxGetApp().project->layoutDirty = true;
+		delete this->anchor;
+		this->anchor = nullptr;
+	}
+}
+
+void icCanvas::OnContextMenu_SplitCustom(wxCommandEvent& event)
+{
+	// TODO: Get rows and cols form user using a modal dialog.
+	//       Make sure rows >= 1 && cols >= 1 and rows != cols if rows == 1.
+}
+
+void icCanvas::OnContextMenu_Collapse(wxCommandEvent& event)
+{
+	icEdgeAnchor* edgeAnchor = dynamic_cast<icEdgeAnchor*>(this->anchor);
+	if (edgeAnchor)
+	{
+		edgeAnchor->node->Collapse();
+		wxGetApp().project->layoutDirty = true;
+		delete this->anchor;
+		this->anchor = nullptr;
 	}
 }
