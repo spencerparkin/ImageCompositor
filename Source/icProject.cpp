@@ -6,6 +6,7 @@
 icProject::icProject()
 {
 	this->layoutDirty = true;
+	this->needsSaving = false;
 
 	this->frameRect.min = icVector(-10.0f, -10.0f);
 	this->frameRect.max = icVector(10.0f, 10.0f);
@@ -43,7 +44,17 @@ icAnchor* icProject::Pick(const icVector& worldPoint)
 
 	if (this->frameRect.BorderContainsPoint(worldPoint, edgeThickness))
 	{
-		finalAnchor = new icFrameAnchor(&this->frameRect);
+		icFrameAnchor::Side side;
+		if (::fabsf(worldPoint.x - this->frameRect.min.x) <= edgeThickness)
+			side = icFrameAnchor::LEFT;
+		else if (::fabsf(worldPoint.x - this->frameRect.max.x) <= edgeThickness)
+			side = icFrameAnchor::RIGHT;
+		else if (::fabsf(worldPoint.y - this->frameRect.min.y) <= edgeThickness)
+			side = icFrameAnchor::BOTTOM;
+		else
+			side = icFrameAnchor::TOP;
+
+		finalAnchor = new icFrameAnchor(&this->frameRect, side);
 	}
 	else if (this->rootNode)
 	{

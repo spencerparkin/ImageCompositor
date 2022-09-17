@@ -51,9 +51,10 @@ icNodeAnchor::icNodeAnchor(icNode* node)
 
 //------------------------- icFrameAnchor -------------------------
 
-icFrameAnchor::icFrameAnchor(icRectangle* frameRect)
+icFrameAnchor::icFrameAnchor(icRectangle* frameRect, Side side)
 {
 	this->frameRect = frameRect;
+	this->side = side;
 }
 
 /*virtual*/ icFrameAnchor::~icFrameAnchor()
@@ -77,10 +78,39 @@ icFrameAnchor::icFrameAnchor(icRectangle* frameRect)
 
 /*virtual*/ void icFrameAnchor::HandleDrag(const icVector& dragDelta)
 {
+	switch (this->side)
+	{
+		case Side::LEFT:
+		{
+			this->frameRect->min.x += dragDelta.x;
+			break;
+		}
+		case Side::RIGHT:
+		{
+			this->frameRect->max.x += dragDelta.x;
+			break;
+		}
+		case Side::TOP:
+		{
+			this->frameRect->min.y += dragDelta.y;
+			break;
+		}
+		case Side::BOTTOM:
+		{
+			this->frameRect->max.y += dragDelta.y;
+			break;
+		}
+	}
 }
 
 /*virtual*/ wxStockCursor icFrameAnchor::GetDragCursor()
 {
+	if (this->side == Side::TOP || this->side == Side::BOTTOM)
+		return wxCURSOR_SIZENS;
+
+	if (this->side == Side::LEFT || this->side == Side::RIGHT)
+		return wxCURSOR_SIZEWE;
+
 	return wxCURSOR_ARROW;
 }
 

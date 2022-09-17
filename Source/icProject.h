@@ -21,4 +21,5 @@ public:
 	icNode* rootNode;
 	icRectangle frameRect;
 	mutable bool layoutDirty;
+	bool needsSaving;
 };

@@ -12,6 +12,7 @@ public:
 	icNode();
 	virtual ~icNode();
 
+	// TODO: This could be part of an undo/redo system.
 	icNode* Clone() const;
 
 	//void Save() const;

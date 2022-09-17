@@ -41,7 +41,7 @@ public:
 		BOTTOM
 	};
 
-	icFrameAnchor(icRectangle* frameRect);
+	icFrameAnchor(icRectangle* frameRect, Side side);
 	virtual ~icFrameAnchor();
 
 	virtual void Render() override;
@@ -49,6 +49,7 @@ public:
 	virtual wxStockCursor GetDragCursor() override;
 
 	icRectangle* frameRect;
+	Side side;
 };
 
 class icEdgeAnchor : public icAnchor
