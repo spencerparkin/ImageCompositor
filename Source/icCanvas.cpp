@@ -158,6 +158,7 @@ void icCanvas::OnMouseMotion(wxMouseEvent& event)
 			icVector dragDelta = dragEnd - this->dragStart;
 			this->anchor->HandleDrag(dragDelta);
 			this->dragStart = dragEnd;
+			wxGetApp().project->layoutDirty = true;
 		}
 		else
 		{

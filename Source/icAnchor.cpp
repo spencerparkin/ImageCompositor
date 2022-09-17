@@ -136,4 +136,20 @@ icEdgeAnchor::icEdgeAnchor(icNode* node, int i, Orientation orientation)
 
 /*virtual*/ void icEdgeAnchor::HandleDrag(const icVector& dragDelta)
 {
+	float* proportionArray = nullptr;
+	if (this->orientation == Orientation::VERTICAL)
+		proportionArray = node->childVProportionArray;
+	else if (this->orientation == Orientation::HORIZONTAL)
+		proportionArray = node->childHProportionArray;
+
+	if (proportionArray)
+	{
+		float vLerp, hLerp;
+		this->node->worldRect.Lerp(this->node->worldRect.min + dragDelta, hLerp, vLerp);
+
+		if (this->orientation == Orientation::VERTICAL)
+			this->node->AdjustProportionArray(proportionArray, this->node->childNodeMatrixRows, this->i, vLerp);
+		else if (this->orientation == Orientation::HORIZONTAL)
+			this->node->AdjustProportionArray(proportionArray, this->node->childNodeMatrixCols, this->i, hLerp);
+	}
 }

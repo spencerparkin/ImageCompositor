@@ -322,3 +322,33 @@ icAnchor* icNode::Pick(const icVector& worldPoint, float edgeThickness, const ic
 
 	return nullptr;
 }
+
+void icNode::AdjustProportionArray(float* proportionArray, int proportionArraySize, int i, float delta)
+{
+	if (0 <= i && i < proportionArraySize - 1)
+	{
+		float minProportion = 0.05f;
+
+		int j = i + 1;
+		float& proportionA = proportionArray[i];
+		float& proportionB = proportionArray[j];
+		float length = ::fabs(delta);
+		if (length < proportionA && length < proportionB)
+		{
+			if (proportionA + delta >= minProportion && proportionB - delta >= minProportion)
+			{
+				proportionA += delta;
+				proportionB -= delta;
+			}
+		}
+
+		// We're done at this point, but we might just try to adjust for any accumulated round-off error.
+		// The sum of all the proportions should add up to one.
+		float sum = 0.0f;
+		for (i = 0; i < proportionArraySize; i++)
+			sum += proportionArray[i];
+		float error = 1.0f - sum;
+		if (error != 0.0f)
+			proportionA += error;	// We could apply this anywhere, but let's just use the recently modified proportion.
+	}
+}

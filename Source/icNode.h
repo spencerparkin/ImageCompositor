@@ -22,14 +22,11 @@ public:
 	void PanUVs(const icVector& panDelta);
 	void ZoomUVs(float zoomFactor);
 	void AssignImage(const wxString& imagePath);
-
 	void Layout(const icRectangle& worldRect);
-
 	bool ForEachNode(std::function<bool(icNode*)> visitationFunc);
-
 	void Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect);
-
 	icAnchor* Pick(const icVector& worldPoint, float edgeThickness, const icAnchor* tentativeAnchor);
+	void AdjustProportionArray(float* proportionArray, int proportionArraySize, int i, float delta);
 
 	icNode*** childNodeMatrix;
 	int childNodeMatrixRows;
