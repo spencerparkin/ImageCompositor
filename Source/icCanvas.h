@@ -1,5 +1,6 @@
 #pragma once
 
+#include "icVector.h"
 #include <wx/glcanvas.h>
 
 class icRectangle;
@@ -23,7 +24,8 @@ public:
 		ID_ContextMenu_SplitVertical = wxID_HIGHEST + 1000,
 		ID_ContextMenu_SplitHorizontal,
 		ID_ContextMenu_SplitCustom,
-		ID_ContextMenu_Collapse
+		ID_ContextMenu_Collapse,
+		ID_ContextMenu_ResetTransform
 	};
 
 	void OnPaint(wxPaintEvent& event);
@@ -35,13 +37,18 @@ public:
 	void OnContextMenu_SplitHorizontal(wxCommandEvent& event);
 	void OnContextMenu_SplitCustom(wxCommandEvent& event);
 	void OnContextMenu_Collapse(wxCommandEvent& event);
+	void OnContextMenu_ResetTransform(wxCommandEvent& event);
+	void OnMouseWheel(wxMouseEvent& event);
+	void OnLeftMouseButtonDown(wxMouseEvent& event);
+	void OnLeftMouseButtonUp(wxMouseEvent& event);
 
 	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
 	void UpdateAnchor(const wxPoint& mousePoint);
+	icVector MousePointToWorld(const wxPoint& mousePoint);
 
 	static int attributeList[];
-
 	wxGLContext* renderContext;
-
 	icAnchor* anchor;
+	bool dragging;
+	icVector dragStart;
 };

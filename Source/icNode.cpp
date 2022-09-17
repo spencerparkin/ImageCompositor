@@ -1,8 +1,10 @@
 #include "icNode.h"
 #include "icCanvas.h"
 #include "icAnchor.h"
+#include "icConvexPolygon.h"
 #include <wx/image.h>
 #include <gl/GLU.h>
+#include <vector>
 
 icNode::icNode()
 {
@@ -11,9 +13,7 @@ icNode::icNode()
 	this->childNodeMatrixCols = 0;
 	this->childVProportionArray = nullptr;
 	this->childHProportionArray = nullptr;
-	this->uvDelta.x = 0.0f;
-	this->uvDelta.y = 0.0f;
-	this->uvScale = 1.0f;
+	this->imageTransform.Identity();
 	this->imageAspectRatio = 1.0f;
 	this->texture = GL_INVALID_VALUE;
 }
@@ -211,15 +211,26 @@ void icNode::Render(const icRectangle& viewportRect, const icRectangle& viewport
 	uvRect.max.x = 1.0f;
 	uvRect.max.y = 1.0f;
 
-	uvRect.min *= this->uvScale;
-	uvRect.max *= this->uvScale;
-
-	uvRect.min += this->uvDelta;
-	uvRect.max += this->uvDelta;
-
 	icRectangle imageRect(this->worldRect);
 	imageRect.ExpandToMatchAspectRatio(this->imageAspectRatio);
-		
+	
+	icConvexPolygon polygon;
+	imageRect.MakeConvexPolygon(polygon);
+
+	icVector center = polygon.CalcCenter();
+	
+	icTransform toOriginTransform;
+	toOriginTransform.Identity();
+	toOriginTransform.translation = center * -1.0f;
+
+	icTransform fromOriginTransform;
+	fromOriginTransform.Identity();
+	fromOriginTransform.translation = center;
+
+	toOriginTransform.Transform(polygon);
+	this->imageTransform.Transform(polygon);
+	fromOriginTransform.Transform(polygon);
+
 	icRectangle clipRect;
 	float xLerp, yLerp;
 
@@ -243,30 +254,30 @@ void icNode::Render(const icRectangle& viewportRect, const icRectangle& viewport
 		glColor3f(1.0f, 1.0f, 1.0f);
 
 		glTexCoord2f(uvRect.min.x, uvRect.min.y);
-		glVertex2f(imageRect.min.x, imageRect.min.y);
+		glVertex2f(polygon.vertexArray[0].x, polygon.vertexArray[0].y);
 
 		glTexCoord2f(uvRect.max.x, uvRect.min.y);
-		glVertex2f(imageRect.max.x, imageRect.min.y);
+		glVertex2f(polygon.vertexArray[1].x, polygon.vertexArray[1].y);
 
 		glTexCoord2f(uvRect.max.x, uvRect.max.y);
-		glVertex2f(imageRect.max.x, imageRect.max.y);
+		glVertex2f(polygon.vertexArray[2].x, polygon.vertexArray[2].y);
 
 		glTexCoord2f(uvRect.min.x, uvRect.max.y);
-		glVertex2f(imageRect.min.x, imageRect.max.y);
+		glVertex2f(polygon.vertexArray[3].x, polygon.vertexArray[3].y);
 	}
 	else
 	{
 		glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex2f(imageRect.min.x, imageRect.min.y);
+		glVertex2f(polygon.vertexArray[0].x, polygon.vertexArray[0].y);
 
 		glColor3f(0.0f, 1.0f, 0.0f);
-		glVertex2f(imageRect.max.x, imageRect.min.y);
+		glVertex2f(polygon.vertexArray[1].x, polygon.vertexArray[1].y);
 
 		glColor3f(0.0f, 0.0f, 1.0f);
-		glVertex2f(imageRect.max.x, imageRect.max.y);
+		glVertex2f(polygon.vertexArray[2].x, polygon.vertexArray[2].y);
 
 		glColor3f(1.0f, 1.0f, 0.0f);
-		glVertex2f(imageRect.min.x, imageRect.max.y);
+		glVertex2f(polygon.vertexArray[3].x, polygon.vertexArray[3].y);
 	}
 
 	glEnd();

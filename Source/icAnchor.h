@@ -2,6 +2,7 @@
 
 class icRectangle;
 class icNode;
+class icVector;
 
 class icAnchor
 {
@@ -10,6 +11,7 @@ public:
 	virtual ~icAnchor();
 
 	virtual void Render() = 0;
+	virtual void HandleDrag(const icVector& dragDelta) = 0;
 };
 
 class icNodeAnchor : public icAnchor
@@ -19,6 +21,7 @@ public:
 	virtual ~icNodeAnchor();
 
 	virtual void Render() override;
+	virtual void HandleDrag(const icVector& dragDelta) override;
 
 	icNode* node;
 };
@@ -38,6 +41,7 @@ public:
 	virtual ~icFrameAnchor();
 
 	virtual void Render() override;
+	virtual void HandleDrag(const icVector& dragDelta) override;
 
 	icRectangle* frameRect;
 };
@@ -55,6 +59,7 @@ public:
 	virtual ~icEdgeAnchor();
 
 	virtual void Render() override;
+	virtual void HandleDrag(const icVector& dragDelta) override;
 
 	icNode* node;
 	int i;

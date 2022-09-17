@@ -1,7 +1,11 @@
 #pragma once
 
 #include "icVector.h"
+#include <vector>
 
+class icConvexPolygon;
+
+// Note that this kind of rectangle is always axis-aligned.
 class icRectangle
 {
 public:
@@ -30,6 +34,8 @@ public:
 
 	icVector Lerp(float xLerp, float yLerp) const;
 	void Lerp(const icVector& point, float& xLerp, float& yLerp) const;
+
+	void MakeConvexPolygon(icConvexPolygon& polygon) const;
 
 	icVector min, max;
 };

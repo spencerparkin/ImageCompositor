@@ -1,4 +1,5 @@
 #include "icRectangle.h"
+#include "icConvexPolygon.h"
 
 icRectangle::icRectangle()
 {
@@ -141,4 +142,13 @@ void icRectangle::Lerp(const icVector& point, float& xLerp, float& yLerp) const
 {
 	xLerp = (point.x - this->min.x) / (this->max.x - this->min.x);
 	yLerp = (point.y - this->min.y) / (this->max.y - this->min.y);
+}
+
+void icRectangle::MakeConvexPolygon(icConvexPolygon& polygon) const
+{
+	polygon.vertexArray.clear();
+	polygon.vertexArray.push_back(icVector(this->min.x, this->min.y));
+	polygon.vertexArray.push_back(icVector(this->max.x, this->min.y));
+	polygon.vertexArray.push_back(icVector(this->max.x, this->max.y));
+	polygon.vertexArray.push_back(icVector(this->min.x, this->max.y));
 }

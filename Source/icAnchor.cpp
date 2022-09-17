@@ -39,6 +39,11 @@ icNodeAnchor::icNodeAnchor(icNode* node)
 	glEnd();
 }
 
+/*virtual*/ void icNodeAnchor::HandleDrag(const icVector& dragDelta)
+{
+	this->node->imageTransform.translation += dragDelta;
+}
+
 //------------------------- icFrameAnchor -------------------------
 
 icFrameAnchor::icFrameAnchor(icRectangle* frameRect)
@@ -63,6 +68,10 @@ icFrameAnchor::icFrameAnchor(icRectangle* frameRect)
 	glVertex3f(this->frameRect->min.x, this->frameRect->max.y, 0.0f);
 
 	glEnd();
+}
+
+/*virtual*/ void icFrameAnchor::HandleDrag(const icVector& dragDelta)
+{
 }
 
 //------------------------- icEdgeAnchor -------------------------
@@ -123,4 +132,8 @@ icEdgeAnchor::icEdgeAnchor(icNode* node, int i, Orientation orientation)
 	glVertex3f(edgePointB.x, edgePointB.y, 0.0f);
 
 	glEnd();
+}
+
+/*virtual*/ void icEdgeAnchor::HandleDrag(const icVector& dragDelta)
+{
 }

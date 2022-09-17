@@ -12,7 +12,7 @@ int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
 icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeList, wxDefaultPosition, wxDefaultSize)
 {
 	this->anchor = nullptr;
-
+	this->dragging = false;
 	this->renderContext = new wxGLContext(this);
 
 	this->Bind(wxEVT_PAINT, &icCanvas::OnPaint, this);
@@ -24,6 +24,10 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitHorizontal, this, ID_ContextMenu_SplitHorizontal);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitCustom, this, ID_ContextMenu_SplitCustom);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_Collapse, this, ID_ContextMenu_Collapse);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_ResetTransform, this, ID_ContextMenu_ResetTransform);
+	this->Bind(wxEVT_MOUSEWHEEL, &icCanvas::OnMouseWheel, this);
+	this->Bind(wxEVT_LEFT_DOWN, &icCanvas::OnLeftMouseButtonDown, this);
+	this->Bind(wxEVT_LEFT_UP, &icCanvas::OnLeftMouseButtonUp, this);
 
 	this->DragAcceptFiles(true);
 }
@@ -100,7 +104,7 @@ void icCanvas::OnSize(wxSizeEvent& event)
 	this->Refresh();
 }
 
-void icCanvas::UpdateAnchor(const wxPoint& mousePoint)
+icVector icCanvas::MousePointToWorld(const wxPoint& mousePoint)
 {
 	icVector viewportMousePoint(mousePoint.x, mousePoint.y);
 
@@ -111,17 +115,71 @@ void icCanvas::UpdateAnchor(const wxPoint& mousePoint)
 	viewportRect.Lerp(viewportMousePoint, xLerp, yLerp);
 	icVector worldMousePoint = viewportWorldRect.Lerp(xLerp, 1.0f - yLerp);
 
+	return worldMousePoint;
+}
+
+void icCanvas::UpdateAnchor(const wxPoint& mousePoint)
+{
+	icVector worldMousePoint = this->MousePointToWorld(mousePoint);
+
 	delete this->anchor;
 	this->anchor = wxGetApp().project->Pick(worldMousePoint);
+}
+
+void icCanvas::OnMouseWheel(wxMouseEvent& event)
+{
+	if (wxGetApp().project)
+	{
+		this->UpdateAnchor(event.GetPosition());
+
+		icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+		if (nodeAnchor)
+		{
+			float wheelRotation = float(event.GetWheelRotation()) / float(event.GetWheelDelta());
+			float sensativity = 0.1f;
+
+			if (event.ShiftDown())
+				nodeAnchor->node->imageTransform.rotation += wheelRotation * sensativity;
+			else
+				nodeAnchor->node->imageTransform.scale += wheelRotation * sensativity;
+
+			this->Refresh();
+		}
+	}
 }
 
 void icCanvas::OnMouseMotion(wxMouseEvent& event)
 {
 	if (wxGetApp().project)
 	{
-		this->UpdateAnchor(event.GetPosition());
+		if (this->dragging)
+		{
+			icVector dragEnd = this->MousePointToWorld(event.GetPosition());
+			icVector dragDelta = dragEnd - this->dragStart;
+			this->anchor->HandleDrag(dragDelta);
+			this->dragStart = dragEnd;
+		}
+		else
+		{
+			this->UpdateAnchor(event.GetPosition());
+		}
+
 		this->Refresh();
 	}
+}
+
+void icCanvas::OnLeftMouseButtonDown(wxMouseEvent& event)
+{
+	if (wxGetApp().project && this->anchor)
+	{
+		this->dragStart = this->MousePointToWorld(event.GetPosition());
+		this->dragging = true;
+	}
+}
+
+void icCanvas::OnLeftMouseButtonUp(wxMouseEvent& event)
+{
+	this->dragging = false;
 }
 
 void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
@@ -156,16 +214,23 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitCustom, "Split Custom", "Split the region into a given matrix of cells."));
 			contextMenu.AppendSeparator();
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_Collapse, "Collapse", "Collapse the region split by the given edge."));
+			contextMenu.AppendSeparator();
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_ResetTransform, "Reset Transform", "Remove all transformations applied to the image in this region."));
 
-			bool canSplit = (dynamic_cast<icNodeAnchor*>(this->anchor) ? true : false);
-			bool canCollapse = (dynamic_cast<icEdgeAnchor*>(this->anchor) ? true : false);
+			bool isNodeAnchor = (dynamic_cast<icNodeAnchor*>(this->anchor) ? true : false);
+			bool isEdgeAnchor = (dynamic_cast<icEdgeAnchor*>(this->anchor) ? true : false);
 
-			contextMenu.FindItem(ID_ContextMenu_SplitVertical)->Enable(canSplit);
-			contextMenu.FindItem(ID_ContextMenu_SplitHorizontal)->Enable(canSplit);
-			contextMenu.FindItem(ID_ContextMenu_SplitCustom)->Enable(canSplit);
-			contextMenu.FindItem(ID_ContextMenu_Collapse)->Enable(canCollapse);
+			contextMenu.FindItem(ID_ContextMenu_SplitVertical)->Enable(isNodeAnchor);
+			contextMenu.FindItem(ID_ContextMenu_SplitHorizontal)->Enable(isNodeAnchor);
+			contextMenu.FindItem(ID_ContextMenu_SplitCustom)->Enable(isNodeAnchor);
+			contextMenu.FindItem(ID_ContextMenu_Collapse)->Enable(isEdgeAnchor);
+			contextMenu.FindItem(ID_ContextMenu_ResetTransform)->Enable(isNodeAnchor);
 
 			this->PopupMenu(&contextMenu, mousePoint);
+
+			wxGetApp().project->layoutDirty = true;
+			delete this->anchor;
+			this->anchor = nullptr;
 
 			this->Refresh();
 		}
@@ -176,24 +241,14 @@ void icCanvas::OnContextMenu_SplitVertical(wxCommandEvent& event)
 {
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
-	{
 		nodeAnchor->node->Split(2, 1);
-		wxGetApp().project->layoutDirty = true;
-		delete this->anchor;
-		this->anchor = nullptr;
-	}
 }
 
 void icCanvas::OnContextMenu_SplitHorizontal(wxCommandEvent& event)
 {
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
-	{
 		nodeAnchor->node->Split(1, 2);
-		wxGetApp().project->layoutDirty = true;
-		delete this->anchor;
-		this->anchor = nullptr;
-	}
 }
 
 void icCanvas::OnContextMenu_SplitCustom(wxCommandEvent& event)
@@ -206,10 +261,12 @@ void icCanvas::OnContextMenu_Collapse(wxCommandEvent& event)
 {
 	icEdgeAnchor* edgeAnchor = dynamic_cast<icEdgeAnchor*>(this->anchor);
 	if (edgeAnchor)
-	{
 		edgeAnchor->node->Collapse();
-		wxGetApp().project->layoutDirty = true;
-		delete this->anchor;
-		this->anchor = nullptr;
-	}
+}
+
+void icCanvas::OnContextMenu_ResetTransform(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+		nodeAnchor->node->imageTransform.Identity();
 }

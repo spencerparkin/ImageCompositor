@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icRectangle.h"
+#include "icTransform.h"
 #include <wx/string.h>
 
 class icAnchor;
@@ -35,8 +36,7 @@ public:
 	int childNodeMatrixCols;
 	float* childVProportionArray;
 	float* childHProportionArray;
-	icVector uvDelta;
-	float uvScale;
+	icTransform imageTransform;
 	wxString imagePath;
 	float imageAspectRatio;
 	unsigned int texture;

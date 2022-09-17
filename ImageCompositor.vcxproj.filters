@@ -31,6 +31,12 @@
     <ClCompile Include="Source\icAnchor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\icTransform.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\icConvexPolygon.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\icApp.h">
@@ -55,6 +61,12 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="Source\icAnchor.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\icTransform.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\icConvexPolygon.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
