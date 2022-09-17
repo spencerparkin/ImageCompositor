@@ -165,6 +165,12 @@ void icCanvas::OnMouseMotion(wxMouseEvent& event)
 			this->UpdateAnchor(event.GetPosition());
 		}
 
+		if (this->anchor)
+		{
+			wxStockCursor dragCursor = this->anchor->GetDragCursor();
+			wxSetCursor(dragCursor);
+		}
+
 		this->Refresh();
 	}
 }

@@ -44,6 +44,11 @@ icNodeAnchor::icNodeAnchor(icNode* node)
 	this->node->imageTransform.translation += dragDelta;
 }
 
+/*virtual*/ wxStockCursor icNodeAnchor::GetDragCursor()
+{
+	return wxCURSOR_CROSS;
+}
+
 //------------------------- icFrameAnchor -------------------------
 
 icFrameAnchor::icFrameAnchor(icRectangle* frameRect)
@@ -72,6 +77,11 @@ icFrameAnchor::icFrameAnchor(icRectangle* frameRect)
 
 /*virtual*/ void icFrameAnchor::HandleDrag(const icVector& dragDelta)
 {
+}
+
+/*virtual*/ wxStockCursor icFrameAnchor::GetDragCursor()
+{
+	return wxCURSOR_ARROW;
 }
 
 //------------------------- icEdgeAnchor -------------------------
@@ -152,4 +162,14 @@ icEdgeAnchor::icEdgeAnchor(icNode* node, int i, Orientation orientation)
 		else if (this->orientation == Orientation::HORIZONTAL)
 			this->node->AdjustProportionArray(proportionArray, this->node->childNodeMatrixCols, this->i, hLerp);
 	}
+}
+
+/*virtual*/ wxStockCursor icEdgeAnchor::GetDragCursor()
+{
+	if (this->orientation == Orientation::VERTICAL)
+		return wxCURSOR_SIZENS;
+	else if (this->orientation == Orientation::HORIZONTAL)
+		return wxCURSOR_SIZEWE;
+
+	return wxCURSOR_ARROW;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <wx/gdicmn.h>
+
 class icRectangle;
 class icNode;
 class icVector;
@@ -12,6 +14,7 @@ public:
 
 	virtual void Render() = 0;
 	virtual void HandleDrag(const icVector& dragDelta) = 0;
+	virtual wxStockCursor GetDragCursor() = 0;
 };
 
 class icNodeAnchor : public icAnchor
@@ -22,6 +25,7 @@ public:
 
 	virtual void Render() override;
 	virtual void HandleDrag(const icVector& dragDelta) override;
+	virtual wxStockCursor GetDragCursor() override;
 
 	icNode* node;
 };
@@ -42,6 +46,7 @@ public:
 
 	virtual void Render() override;
 	virtual void HandleDrag(const icVector& dragDelta) override;
+	virtual wxStockCursor GetDragCursor() override;
 
 	icRectangle* frameRect;
 };
@@ -60,6 +65,7 @@ public:
 
 	virtual void Render() override;
 	virtual void HandleDrag(const icVector& dragDelta) override;
+	virtual wxStockCursor GetDragCursor() override;
 
 	icNode* node;
 	int i;
