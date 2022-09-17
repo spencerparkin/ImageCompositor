@@ -2,17 +2,18 @@
 
 #include "icVector.h"
 #include <wx/glcanvas.h>
+#include <wx/image.h>
+
+#define SWAP(a, b) \
+	do { \
+		a ^= b; \
+		b ^= a; \
+		a ^= b; \
+	} while(0)
 
 class icRectangle;
 class icAnchor;
 
-// TODO: I want to support drag-and-drop of images into the canvas regions.
-//       There should also be a way to select in the canvas region for various reasons.
-//       E.g., you should be able to click and drag on a border or intersection to move it,
-//       you should be able to zoom the hovered region with the mouse wheel, and you should
-//       be able to click and drag in a region to pan that region's image UVs.  You should
-//       also be able to get a context menu on a region for expanding it, and a context menu
-//       on a border for collapsing it.
 class icCanvas : public wxGLCanvas
 {
 public:
@@ -45,6 +46,8 @@ public:
 	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
 	void UpdateAnchor(const wxPoint& mousePoint);
 	icVector MousePointToWorld(const wxPoint& mousePoint);
+	wxImage* GenerateImage();
+	static void FlipImageUpsideDown(wxImage* image);
 
 	static int attributeList[];
 	wxGLContext* renderContext;

@@ -37,5 +37,8 @@ public:
 
 	void MakeConvexPolygon(icConvexPolygon& polygon) const;
 
+	// Nest this rectangle inside of rectB the same way that rectA_nested is nested inside rectA.
+	void MakeSimilarlyNested(const icRectangle& rectA, const icRectangle& rectA_nested, const icRectangle& rectB);
+
 	icVector min, max;
 };

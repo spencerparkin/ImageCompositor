@@ -277,3 +277,57 @@ void icCanvas::OnContextMenu_ResetTransform(wxCommandEvent& event)
 	if (nodeAnchor)
 		nodeAnchor->node->imageTransform.Identity();
 }
+
+wxImage* icCanvas::GenerateImage()
+{
+	if (!wxGetApp().project)
+		return nullptr;
+
+	this->SetCurrent(*this->renderContext);
+
+	icRectangle viewportRect, viewportWorldRect;
+	this->CalcViewportRectangles(viewportRect, viewportWorldRect);
+
+	icRectangle subViewportRect;
+	subViewportRect.MakeSimilarlyNested(viewportWorldRect, wxGetApp().project->frameRect, viewportRect);
+
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	GLuint x = MAX(GLuint(subViewportRect.min.x), 0);
+	GLuint y = MAX(GLuint(subViewportRect.min.y), 0);
+	GLsizei width = MIN(GLuint(subViewportRect.CalcWidth()), GLuint(viewport[2]));
+	GLsizei height = MIN(GLuint(subViewportRect.CalcHeight()), GLuint(viewport[3]));
+
+	wxImage* image = new wxImage(wxSize(width, height));
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image->GetData());
+
+	this->FlipImageUpsideDown(image);
+
+	return image;
+}
+
+/*static*/ void icCanvas::FlipImageUpsideDown(wxImage* image)
+{
+	unsigned int bytesPerPixel = 3;
+	unsigned char* imageData = image->GetData();
+	int imageWidth = image->GetWidth();
+	int imageHeight = image->GetHeight();
+
+	for (int i = 0; i < imageHeight / 2; i++)
+	{
+		for (int j = 0; j < imageWidth; j++)
+		{
+			int k = imageHeight - 1 - i;
+
+			unsigned char* pixelA = &imageData[imageWidth * bytesPerPixel * i + bytesPerPixel * j];
+			unsigned char* pixelB = &imageData[imageWidth * bytesPerPixel * k + bytesPerPixel * j];
+
+			SWAP(pixelA[0], pixelB[0]);
+			SWAP(pixelA[1], pixelB[1]);
+			SWAP(pixelA[2], pixelB[2]);
+		}
+	}
+}

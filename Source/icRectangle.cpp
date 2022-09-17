@@ -152,3 +152,14 @@ void icRectangle::MakeConvexPolygon(icConvexPolygon& polygon) const
 	polygon.vertexArray.push_back(icVector(this->max.x, this->max.y));
 	polygon.vertexArray.push_back(icVector(this->min.x, this->max.y));
 }
+
+void icRectangle::MakeSimilarlyNested(const icRectangle& rectA, const icRectangle& rectA_nested, const icRectangle& rectB)
+{
+	float xLerp, yLerp;
+
+	rectA.Lerp(rectA_nested.min, xLerp, yLerp);
+	this->min = rectB.Lerp(xLerp, yLerp);
+
+	rectA.Lerp(rectA_nested.max, xLerp, yLerp);
+	this->max = rectB.Lerp(xLerp, yLerp);
+}

@@ -6,6 +6,8 @@
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/aboutdlg.h>
+#include <wx/filedlg.h>
+#include <wx/image.h>
 
 icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxFrame(parent, wxID_ANY, "Image Compositor", pos, size)
 {
@@ -93,7 +95,16 @@ void icFrame::OnCloseProject(wxCommandEvent& event)
 
 void icFrame::OnGenerateImage(wxCommandEvent& event)
 {
-	// TODO: Pull pixels from the framebuffer into an image object and then dump it to disk at the user's given location.
+	wxFileDialog fileSaveDlg(this, "Save composite image file.", wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	if (fileSaveDlg.ShowModal() == wxID_OK)
+	{
+		wxImage* image = this->canvas->GenerateImage();
+
+		wxString filePath = fileSaveDlg.GetPath();
+		image->SaveFile(filePath);
+
+		delete image;
+	}
 }
 
 void icFrame::OnUpdateMenuItemUI(wxUpdateUIEvent& event)

@@ -232,13 +232,7 @@ void icNode::Render(const icRectangle& viewportRect, const icRectangle& viewport
 	fromOriginTransform.Transform(polygon);
 
 	icRectangle clipRect;
-	float xLerp, yLerp;
-
-	viewportWorldRect.Lerp(this->worldRect.min, xLerp, yLerp);
-	clipRect.min = viewportRect.Lerp(xLerp, yLerp);
-
-	viewportWorldRect.Lerp(this->worldRect.max, xLerp, yLerp);
-	clipRect.max = viewportRect.Lerp(xLerp, yLerp);
+	clipRect.MakeSimilarlyNested(viewportWorldRect, this->worldRect, viewportRect);
 
 	clipRect.min.x = ::floorf(clipRect.min.x);
 	clipRect.min.y = ::floorf(clipRect.min.y);
