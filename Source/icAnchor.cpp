@@ -92,12 +92,12 @@ icFrameAnchor::icFrameAnchor(icRectangle* frameRect, Side side)
 		}
 		case Side::TOP:
 		{
-			this->frameRect->min.y += dragDelta.y;
+			this->frameRect->min.y -= dragDelta.y;
 			break;
 		}
 		case Side::BOTTOM:
 		{
-			this->frameRect->max.y += dragDelta.y;
+			this->frameRect->max.y -= dragDelta.y;
 			break;
 		}
 	}

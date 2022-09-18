@@ -17,6 +17,7 @@ public:
 
 	icFrame* frame;
 	icProject* project;
+	wxString projectFilePath;
 };
 
 wxDECLARE_APP(icApp);

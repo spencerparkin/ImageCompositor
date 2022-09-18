@@ -82,3 +82,47 @@ void icProject::UpdateLayoutIfNeeded()
 		this->layoutDirty = false;
 	}
 }
+
+bool icProject::LoadFromXML(const wxXmlDocument& xmlDoc)
+{
+	const wxXmlNode* xmlRootNode = xmlDoc.GetRoot();
+	if (xmlRootNode->GetName() != "ICProject")
+		return false;
+
+	delete this->rootNode;
+	this->rootNode = nullptr;
+
+	if (!xmlRootNode->GetChildren() || xmlRootNode->GetChildren()->GetName() != "Frame")
+		return false;
+
+	const wxXmlNode* xmlFrameNode = xmlRootNode->GetChildren();
+	if (!this->frameRect.LoadFromXml(xmlFrameNode))
+		return false;
+
+	wxXmlNode* xmlNode = xmlRootNode->GetChildren()->GetNext();
+	if (!xmlNode)
+		return false;
+
+	this->rootNode = new icNode();
+	if (!this->rootNode->LoadFromXml(xmlNode))
+		return false;
+
+	this->layoutDirty = true;
+	return false;
+}
+
+void icProject::SaveToXML(wxXmlDocument& xmlDoc) const
+{
+	wxXmlNode* xmlRootNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "ICProject");
+
+	wxXmlNode* xmlFrameNode = this->frameRect.SaveToXml("Frame");
+	xmlRootNode->AddChild(xmlFrameNode);
+
+	if (this->rootNode)
+	{
+		wxXmlNode* xmlNode = this->rootNode->SaveToXml();
+		xmlRootNode->AddChild(xmlNode);
+	}
+
+	xmlDoc.SetRoot(xmlRootNode);
+}

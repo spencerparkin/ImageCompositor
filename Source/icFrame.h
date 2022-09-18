@@ -31,5 +31,7 @@ public:
 	void OnUpdateMenuItemUI(wxUpdateUIEvent& event);
 	void OnClose(wxCloseEvent& event);
 
+	bool PerformSaveOperation();
+
 	icCanvas* canvas;
 };

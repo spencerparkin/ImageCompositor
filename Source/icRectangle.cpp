@@ -163,3 +163,25 @@ void icRectangle::MakeSimilarlyNested(const icRectangle& rectA, const icRectangl
 	rectA.Lerp(rectA_nested.max, xLerp, yLerp);
 	this->max = rectB.Lerp(xLerp, yLerp);
 }
+
+wxXmlNode* icRectangle::SaveToXml(const wxString& name) const
+{
+	wxXmlNode* xmlNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, name);
+	xmlNode->AddChild(this->min.SaveToXml("min"));
+	xmlNode->AddChild(this->max.SaveToXml("max"));
+	return xmlNode;
+}
+
+bool icRectangle::LoadFromXml(const wxXmlNode* xmlNode)
+{
+	if (!xmlNode->GetChildren() || !xmlNode->GetChildren()->GetNext())
+		return false;
+
+	if (!this->min.LoadFromXml(xmlNode->GetChildren()))
+		return false;
+
+	if (!this->max.LoadFromXml(xmlNode->GetChildren()->GetNext()))
+		return false;
+
+	return true;
+}

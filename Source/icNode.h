@@ -3,6 +3,7 @@
 #include "icRectangle.h"
 #include "icTransform.h"
 #include <wx/string.h>
+#include <wx/xml/xml.h>
 
 class icAnchor;
 
@@ -15,8 +16,8 @@ public:
 	// TODO: This could be part of an undo/redo system.
 	icNode* Clone() const;
 
-	//void Save() const;
-	//static icNode* Load();
+	bool LoadFromXml(const wxXmlNode* xmlNode);
+	wxXmlNode* SaveToXml() const;
 
 	void Split(int rows, int cols);
 	void Collapse();

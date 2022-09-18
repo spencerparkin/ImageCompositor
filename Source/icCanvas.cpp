@@ -187,6 +187,9 @@ void icCanvas::OnLeftMouseButtonDown(wxMouseEvent& event)
 void icCanvas::OnLeftMouseButtonUp(wxMouseEvent& event)
 {
 	this->dragging = false;
+
+	if (wxGetApp().project)
+		wxGetApp().project->needsSaving = true;
 }
 
 void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
@@ -199,6 +202,7 @@ void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
 		if (nodeAnchor)
 		{
 			nodeAnchor->node->AssignImage(event.GetFiles()[0]);
+			wxGetApp().project->needsSaving = true;
 			this->Refresh();
 		}
 	}
@@ -235,6 +239,7 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 
 			this->PopupMenu(&contextMenu, mousePoint);
 
+			wxGetApp().project->needsSaving = true;
 			wxGetApp().project->layoutDirty = true;
 			delete this->anchor;
 			this->anchor = nullptr;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <wx/xml/xml.h>
+
 #define MIN(valueA, valueB)						((valueA) < (valueB) ? (valueA) : (valueB))
 #define MAX(valueA, valueB)						((valueA) > (valueB) ? (valueA) : (valueB))
 #define CLAMP(value, minValue, maxValue)		MAX(MIN(value, maxValue), minValue)
@@ -20,6 +22,9 @@ public:
 	void operator+=(const icVector& vec);
 	void operator-=(const icVector& vec);
 	void operator*=(float scalar);
+
+	wxXmlNode* SaveToXml(const wxString& name) const;
+	bool LoadFromXml(const wxXmlNode* xmlNode);
 
 	float x, y;
 };

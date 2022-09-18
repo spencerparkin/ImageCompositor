@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icVector.h"
+#include <wx/xml/xml.h>
 #include <vector>
 
 class icConvexPolygon;
@@ -39,6 +40,9 @@ public:
 
 	// Nest this rectangle inside of rectB the same way that rectA_nested is nested inside rectA.
 	void MakeSimilarlyNested(const icRectangle& rectA, const icRectangle& rectA_nested, const icRectangle& rectB);
+
+	wxXmlNode* SaveToXml(const wxString& name) const;
+	bool LoadFromXml(const wxXmlNode* xmlNode);
 
 	icVector min, max;
 };

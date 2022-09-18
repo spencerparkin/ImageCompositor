@@ -28,6 +28,148 @@ icNode* icNode::Clone() const
 	return nullptr;
 }
 
+bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
+{
+	if (!xmlNode->HasAttribute("imagePath") || !xmlNode->HasAttribute("imageAspectRatio"))
+		return false;
+
+	this->imagePath = xmlNode->GetAttribute("imagePath");
+
+	double value;
+	if (!xmlNode->GetAttribute("imageAspectRatio").ToDouble(&value))
+		return false;
+
+	this->imageAspectRatio = float(value);
+
+	if (!xmlNode->GetChildren() || xmlNode->GetChildren()->GetName() != "imageTransform")
+		return false;
+
+	if (!this->imageTransform.LoadFromXml(xmlNode->GetChildren()))
+		return false;
+
+	if (!xmlNode->HasAttribute("rows") || !xmlNode->HasAttribute("rows"))
+		return false;
+
+	long intValue;
+	if (!xmlNode->GetAttribute("rows").ToLong(&intValue))
+		return false;
+
+	this->childNodeMatrixRows = int(intValue);
+
+	if (!xmlNode->GetAttribute("cols").ToLong(&intValue))
+		return false;
+
+	this->childNodeMatrixCols = int(intValue);
+
+	if (!xmlNode->GetChildren()->GetNext() && xmlNode->GetChildren()->GetNext()->GetName() != "VProportionArray")
+		return false;
+
+	if (!xmlNode->GetChildren()->GetNext()->GetNext() && xmlNode->GetChildren()->GetNext()->GetNext()->GetName() != "HProportionArray")
+		return false;
+
+	wxXmlNode* xmlVProportionNode = xmlNode->GetChildren()->GetNext();
+	wxXmlNode* xmlHProportionNode = xmlNode->GetChildren()->GetNext()->GetNext();
+
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
+	{
+		if (!xmlVProportionNode->HasAttribute(wxString::Format("%d", i)))
+			return false;
+
+		if (!xmlVProportionNode->GetAttribute(wxString::Format("%d", i)).ToDouble(&value))
+			return false;
+
+		this->childVProportionArray[i] = float(value);
+	}
+
+	for (int i = 0; i < this->childNodeMatrixCols; i++)
+	{
+		if (!xmlHProportionNode->HasAttribute(wxString::Format("%d", i)))
+			return false;
+
+		if (!xmlHProportionNode->GetAttribute(wxString::Format("%d", i)).ToDouble(&value))
+			return false;
+
+		this->childHProportionArray[i] = float(value);
+	}
+
+	this->Collapse();
+	this->Split(this->childNodeMatrixRows, this->childNodeMatrixCols);
+
+	if (!xmlNode->GetChildren()->GetNext()->GetNext()->GetNext() && xmlNode->GetChildren()->GetNext()->GetNext()->GetNext()->GetName() != "Matrix")
+		return false;
+
+	wxXmlNode* xmlMatrixNode = xmlNode->GetChildren()->GetNext()->GetNext()->GetNext();
+
+	for (wxXmlNode* xmlMatrixChildNode = xmlMatrixNode->GetChildren(); xmlMatrixChildNode; xmlMatrixChildNode = xmlMatrixChildNode->GetNext())
+	{
+		if (!xmlMatrixChildNode->HasAttribute("i") || !xmlMatrixChildNode->HasAttribute("j"))
+			return false;
+
+		if (!xmlMatrixChildNode->GetAttribute("i").ToLong(&intValue))
+			return false;
+
+		int i = int(intValue);
+
+		if (!xmlMatrixChildNode->GetAttribute("j").ToLong(&intValue))
+			return false;
+
+		int j = int(intValue);
+
+		if (i < 0 || i >= this->childNodeMatrixRows)
+			return false;
+
+		if (j < 0 || j >= this->childNodeMatrixCols)
+			return false;
+
+		icNode* childNode = this->childNodeMatrix[i][j];
+		if (!childNode->LoadFromXml(xmlMatrixChildNode))
+			return false;
+	}
+
+	return true;
+}
+
+wxXmlNode* icNode::SaveToXml() const
+{
+	wxXmlNode* xmlNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "Node");
+
+	xmlNode->AddAttribute("imagePath", this->imagePath);
+	xmlNode->AddAttribute("imageAspectRatio", wxString::Format("%f", this->imageAspectRatio));
+	
+	wxXmlNode* xmlTransformNode = this->imageTransform.SaveToXml("imageTransform");
+	xmlNode->AddChild(xmlTransformNode);
+
+	xmlNode->AddAttribute("rows", wxString::Format("%d", this->childNodeMatrixRows));
+	xmlNode->AddAttribute("cols", wxString::Format("%d", this->childNodeMatrixCols));
+
+	wxXmlNode* xmlVProportionNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "VProportionArray");
+	xmlNode->AddChild(xmlVProportionNode);
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
+		xmlVProportionNode->AddAttribute(wxString::Format("%d", i), wxString::Format("%f", this->childVProportionArray[i]));
+
+	wxXmlNode* xmlHProportionNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "HProportionArray");
+	xmlNode->AddChild(xmlHProportionNode);
+	for (int i = 0; i < this->childNodeMatrixCols; i++)
+		xmlVProportionNode->AddAttribute(wxString::Format("%d", i), wxString::Format("%f", this->childHProportionArray[i]));
+
+	wxXmlNode* xmlMatrixNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "Matrix");
+	xmlNode->AddChild(xmlMatrixNode);
+
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
+	{
+		for (int j = 0; j < this->childNodeMatrixCols; j++)
+		{
+			icNode* childNode = this->childNodeMatrix[i][j];
+			wxXmlNode* xmlSubNode = childNode->SaveToXml();
+			xmlSubNode->AddAttribute("i", wxString::Format("%d", i));
+			xmlSubNode->AddAttribute("j", wxString::Format("%d", j));
+			xmlMatrixNode->AddChild(xmlSubNode);
+		}
+	}
+
+	return xmlNode;
+}
+
 void icNode::Split(int rows, int cols)
 {
 	if (this->childNodeMatrix == nullptr)
@@ -92,6 +234,8 @@ void icNode::ZoomUVs(float zoomFactor)
 
 void icNode::AssignImage(const wxString& imagePath)
 {
+	wxBusyCursor busyCursor;
+
 	if (this->texture != GL_INVALID_VALUE)
 	{
 		glDeleteTextures(1, &this->texture);
@@ -137,7 +281,11 @@ void icNode::AssignImage(const wxString& imagePath)
 				}
 			}
 
+#if 0 // Probably don't need to build mip-maps.
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, imageWidth, imageHeight, GL_RGBA, GL_UNSIGNED_BYTE, textureBuffer);
+#else
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureBuffer);
+#endif
 
 			delete[] textureBuffer;
 

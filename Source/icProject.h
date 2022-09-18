@@ -1,6 +1,7 @@
 #pragma once
 
 #include "icRectangle.h"
+#include <wx/xml/xml.h>
 
 class icNode;
 class icRectangle;
@@ -13,10 +14,10 @@ public:
 	virtual ~icProject();
 
 	void Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect);
-
 	icAnchor* Pick(const icVector& worldPoint);
-
 	void UpdateLayoutIfNeeded();
+	bool LoadFromXML(const wxXmlDocument& xmlDoc);
+	void SaveToXML(wxXmlDocument& xmlDoc) const;
 
 	icNode* rootNode;
 	icRectangle frameRect;

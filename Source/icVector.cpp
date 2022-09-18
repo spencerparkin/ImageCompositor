@@ -69,3 +69,31 @@ icVector operator*(const icVector& vec, float scalar)
 {
 	return icVector(vec.x * scalar, vec.y * scalar);
 }
+
+wxXmlNode* icVector::SaveToXml(const wxString& name) const
+{
+	wxXmlNode* xmlNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, name);
+	xmlNode->AddAttribute("x", wxString::Format("%f", this->x));
+	xmlNode->AddAttribute("y", wxString::Format("%f", this->y));
+	return xmlNode;
+}
+
+bool icVector::LoadFromXml(const wxXmlNode* xmlNode)
+{
+	if (!xmlNode->HasAttribute("x") || !xmlNode->HasAttribute("y"))
+		return false;
+
+	double value;
+
+	if (!xmlNode->GetAttribute("x").ToDouble(&value))
+		return false;
+
+	this->x = float(value);
+
+	if (!xmlNode->GetAttribute("y").ToDouble(&value))
+		return false;
+
+	this->y = float(value);
+
+	return true;
+}

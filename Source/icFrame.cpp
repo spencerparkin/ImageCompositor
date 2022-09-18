@@ -8,6 +8,8 @@
 #include <wx/aboutdlg.h>
 #include <wx/filedlg.h>
 #include <wx/image.h>
+#include <wx/msgdlg.h>
+#include <wx/xml/xml.h>
 
 icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxFrame(parent, wxID_ANY, "Image Compositor", pos, size)
 {
@@ -78,19 +80,86 @@ void icFrame::OnNewProject(wxCommandEvent& event)
 		delete wxGetApp().project;
 
 	wxGetApp().project = new icProject();
+	wxGetApp().projectFilePath = "";
+
 	this->Refresh();
 }
 
 void icFrame::OnOpenProject(wxCommandEvent& event)
 {
+	if (!wxGetApp().project)
+	{
+		wxFileDialog fileOpenDlg(this, "Open proejct file.", wxEmptyString, wxEmptyString, "IC Project (*.icproj)|*.icproj", wxFD_OPEN);
+		if (fileOpenDlg.ShowModal() == wxID_OK)
+		{
+			wxGetApp().project = new icProject();
+			
+			wxXmlDocument xmlDoc;
+			if (xmlDoc.Load(fileOpenDlg.GetPath()))
+			{
+				wxGetApp().project->LoadFromXML(xmlDoc);
+				wxGetApp().projectFilePath = fileOpenDlg.GetPath();
+			}
+			else
+			{
+				wxMessageBox("Failed to load file: " + fileOpenDlg.GetPath(), "Error!", wxICON_ERROR, this);
+				delete wxGetApp().project;
+				wxGetApp().project = nullptr;
+			}
+		}
+
+		this->Refresh();
+	}
 }
 
 void icFrame::OnSaveProject(wxCommandEvent& event)
 {
+	this->PerformSaveOperation();
 }
 
 void icFrame::OnCloseProject(wxCommandEvent& event)
 {
+	if (wxGetApp().project && wxGetApp().project->needsSaving)
+	{
+		int response = wxMessageBox("You have unsaved changes.  Save before closing?", "Save?", wxYES_NO | wxCANCEL | wxICON_QUESTION);
+		if (response == wxCANCEL)
+			return;
+		else if (response == wxYES)
+			if (!this->PerformSaveOperation())
+				return;
+
+		delete wxGetApp().project;
+		wxGetApp().project = nullptr;
+		wxGetApp().projectFilePath = "";
+
+		this->Refresh();
+	}
+}
+
+bool icFrame::PerformSaveOperation()
+{
+	if (!wxGetApp().project)
+		return false;
+	
+	if (wxGetApp().projectFilePath.Len() == 0)
+	{
+		wxFileDialog fileSaveDlg(this, "Save project file.", wxEmptyString, wxEmptyString, "IC Project (*.icproj)|*.icproj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+		if (fileSaveDlg.ShowModal() != wxID_OK)
+			return false;
+
+		wxGetApp().projectFilePath = fileSaveDlg.GetPath();
+	}
+
+	wxXmlDocument xmlDoc;
+	wxGetApp().project->SaveToXML(xmlDoc);
+	if (!xmlDoc.Save(wxGetApp().projectFilePath))
+	{
+		wxMessageBox("Failed to save file: " + wxGetApp().projectFilePath, "Error!", wxICON_ERROR, this);
+		return false;
+	}
+
+	wxGetApp().project->needsSaving = false;
+	return true;
 }
 
 void icFrame::OnGenerateImage(wxCommandEvent& event)
@@ -112,10 +181,14 @@ void icFrame::OnUpdateMenuItemUI(wxUpdateUIEvent& event)
 	switch (event.GetId())
 	{
 		case ID_GenerateImage:
-		case ID_SaveProject:
 		case ID_CloseProject:
 		{
 			event.Enable(wxGetApp().project != nullptr);
+			break;
+		}
+		case ID_SaveProject:
+		{
+			event.Enable(wxGetApp().project != nullptr && wxGetApp().project->needsSaving);
 			break;
 		}
 		case ID_NewProject:
@@ -129,7 +202,16 @@ void icFrame::OnUpdateMenuItemUI(wxUpdateUIEvent& event)
 
 void icFrame::OnClose(wxCloseEvent& event)
 {
-	// TODO: Cancel if project unsaved and user cancels.
+	if (wxGetApp().project && wxGetApp().project->needsSaving)
+	{
+		int response = wxMessageBox("You have unsaved changes.  Save before exiting?", "Save?", wxYES_NO | wxCANCEL | wxICON_QUESTION);
+		if (response == wxCANCEL)
+			return;
+		else if (response == wxYES)
+			if (!this->PerformSaveOperation())
+				return;
+	}
 
+	// Let the default handler handle it which will actually close the application.
 	event.Skip();
 }

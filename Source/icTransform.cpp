@@ -44,3 +44,34 @@ icTransform operator*(const icTransform& transformA, const icTransform& transfor
 	//...
 	return result;
 }
+
+bool icTransform::LoadFromXml(const wxXmlNode* xmlNode)
+{
+	if (!xmlNode->HasAttribute("scale") || !xmlNode->HasAttribute("rotation") || !xmlNode->GetChildren())
+		return false;
+
+	double value;
+	if (!xmlNode->GetAttribute("scale").ToDouble(&value))
+		return false;
+
+	this->scale = float(value);
+
+	if (!xmlNode->GetAttribute("rotation").ToDouble(&value))
+		return false;
+
+	this->rotation = float(value);
+
+	if (!this->translation.LoadFromXml(xmlNode->GetChildren()))
+		return false;
+
+	return false;
+}
+
+wxXmlNode* icTransform::SaveToXml(const wxString& name) const
+{
+	wxXmlNode* xmlNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, name);
+	xmlNode->AddAttribute("scale", wxString::Format("%f", this->scale));
+	xmlNode->AddAttribute("rotation", wxString::Format("%f", this->rotation));
+	xmlNode->AddChild(this->translation.SaveToXml("translation"));
+	return xmlNode;
+}
