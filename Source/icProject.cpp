@@ -108,7 +108,7 @@ bool icProject::LoadFromXML(const wxXmlDocument& xmlDoc)
 		return false;
 
 	this->layoutDirty = true;
-	return false;
+	return true;
 }
 
 void icProject::SaveToXML(wxXmlDocument& xmlDoc) const

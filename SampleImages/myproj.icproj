@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ICProject>
+  <Frame>
+    <min x="-22.021677" y="-10.000000"/>
+    <max x="10.000000" y="10.000000"/>
+  </Frame>
+  <Node imagePath="" imageAspectRatio="1.000000" rows="1" cols="2">
+    <imageTransform scale="1.000000" rotation="0.000000">
+      <translation x="0.000000" y="0.000000"/>
+    </imageTransform>
+    <VProportionArray>
+      <VProportion p="1.000000"/>
+    </VProportionArray>
+    <HProportionArray>
+      <HProportion p="0.168727"/>
+      <HProportion p="0.831273"/>
+    </HProportionArray>
+    <Matrix>
+      <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\BabyGerrafe.jpg" imageAspectRatio="1.473373" rows="0" cols="0" i="0" j="0">
+        <imageTransform scale="1.400000" rotation="0.000000">
+          <translation x="-2.097265" y="-1.854104"/>
+        </imageTransform>
+        <VProportionArray/>
+        <HProportionArray/>
+        <Matrix/>
+      </Node>
+      <Node imagePath="" imageAspectRatio="1.000000" rows="1" cols="2" i="0" j="1">
+        <imageTransform scale="1.000000" rotation="0.000000">
+          <translation x="0.000000" y="0.000000"/>
+        </imageTransform>
+        <VProportionArray>
+          <VProportion p="1.000000"/>
+        </VProportionArray>
+        <HProportionArray>
+          <HProportion p="0.804879"/>
+          <HProportion p="0.195121"/>
+        </HProportionArray>
+        <Matrix>
+          <Node imagePath="" imageAspectRatio="1.000000" rows="2" cols="1" i="0" j="0">
+            <imageTransform scale="1.000000" rotation="0.000000">
+              <translation x="0.000000" y="0.000000"/>
+            </imageTransform>
+            <VProportionArray>
+              <VProportion p="0.182370"/>
+              <VProportion p="0.817630"/>
+            </VProportionArray>
+            <HProportionArray>
+              <HProportion p="1.000000"/>
+            </HProportionArray>
+            <Matrix>
+              <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\Shark.jpg" imageAspectRatio="1.611111" rows="0" cols="0" i="0" j="0">
+                <imageTransform scale="1.000000" rotation="0.000000">
+                  <translation x="0.091185" y="-1.428573"/>
+                </imageTransform>
+                <VProportionArray/>
+                <HProportionArray/>
+                <Matrix/>
+              </Node>
+              <Node imagePath="" imageAspectRatio="1.000000" rows="2" cols="1" i="1" j="0">
+                <imageTransform scale="1.000000" rotation="0.000000">
+                  <translation x="0.000000" y="0.000000"/>
+                </imageTransform>
+                <VProportionArray>
+                  <VProportion p="0.765799"/>
+                  <VProportion p="0.234201"/>
+                </VProportionArray>
+                <HProportionArray>
+                  <HProportion p="1.000000"/>
+                </HProportionArray>
+                <Matrix>
+                  <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\BabyPanda.jpg" imageAspectRatio="1.715278" rows="0" cols="0" i="0" j="0">
+                    <imageTransform scale="1.400000" rotation="0.000000">
+                      <translation x="-1.489361" y="-1.003040"/>
+                    </imageTransform>
+                    <VProportionArray/>
+                    <HProportionArray/>
+                    <Matrix/>
+                  </Node>
+                  <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\BabyDuck.jpg" imageAspectRatio="1.532934" rows="0" cols="0" i="1" j="0">
+                    <imageTransform scale="1.200000" rotation="0.000000">
+                      <translation x="0.364742" y="0.182371"/>
+                    </imageTransform>
+                    <VProportionArray/>
+                    <HProportionArray/>
+                    <Matrix/>
+                  </Node>
+                </Matrix>
+              </Node>
+            </Matrix>
+          </Node>
+          <Node imagePath="" imageAspectRatio="1.000000" rows="2" cols="1" i="0" j="1">
+            <imageTransform scale="1.000000" rotation="0.000000">
+              <translation x="0.000000" y="0.000000"/>
+            </imageTransform>
+            <VProportionArray>
+              <VProportion p="0.500000"/>
+              <VProportion p="0.500000"/>
+            </VProportionArray>
+            <HProportionArray>
+              <HProportion p="1.000000"/>
+            </HProportionArray>
+            <Matrix>
+              <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\BabyPanda.jpg" imageAspectRatio="1.715278" rows="0" cols="0" i="0" j="0">
+                <imageTransform scale="1.300000" rotation="0.000000">
+                  <translation x="-1.003036" y="-0.151976"/>
+                </imageTransform>
+                <VProportionArray/>
+                <HProportionArray/>
+                <Matrix/>
+              </Node>
+              <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\BabyGerrafe.jpg" imageAspectRatio="1.473373" rows="0" cols="0" i="1" j="0">
+                <imageTransform scale="1.200000" rotation="0.000000">
+                  <translation x="0.243164" y="0.212765"/>
+                </imageTransform>
+                <VProportionArray/>
+                <HProportionArray/>
+                <Matrix/>
+              </Node>
+            </Matrix>
+          </Node>
+        </Matrix>
+      </Node>
+    </Matrix>
+  </Node>
+</ICProject>

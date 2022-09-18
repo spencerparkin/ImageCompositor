@@ -30,12 +30,18 @@ icNode* icNode::Clone() const
 
 bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
 {
+	double value;
+	long intValue;
+
+	this->Collapse();
+
 	if (!xmlNode->HasAttribute("imagePath") || !xmlNode->HasAttribute("imageAspectRatio"))
 		return false;
 
 	this->imagePath = xmlNode->GetAttribute("imagePath");
+	if (this->imagePath.Len() > 0)
+		this->AssignImage(this->imagePath);
 
-	double value;
 	if (!xmlNode->GetAttribute("imageAspectRatio").ToDouble(&value))
 		return false;
 
@@ -50,7 +56,6 @@ bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
 	if (!xmlNode->HasAttribute("rows") || !xmlNode->HasAttribute("rows"))
 		return false;
 
-	long intValue;
 	if (!xmlNode->GetAttribute("rows").ToLong(&intValue))
 		return false;
 
@@ -61,6 +66,8 @@ bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
 
 	this->childNodeMatrixCols = int(intValue);
 
+	this->Split(this->childNodeMatrixRows, this->childNodeMatrixCols);
+
 	if (!xmlNode->GetChildren()->GetNext() && xmlNode->GetChildren()->GetNext()->GetName() != "VProportionArray")
 		return false;
 
@@ -70,30 +77,31 @@ bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
 	wxXmlNode* xmlVProportionNode = xmlNode->GetChildren()->GetNext();
 	wxXmlNode* xmlHProportionNode = xmlNode->GetChildren()->GetNext()->GetNext();
 
+	wxXmlNode* xmlProportionEntryNode = xmlVProportionNode->GetChildren();
 	for (int i = 0; i < this->childNodeMatrixRows; i++)
 	{
-		if (!xmlVProportionNode->HasAttribute(wxString::Format("%d", i)))
+		if (!xmlProportionEntryNode || !xmlProportionEntryNode->HasAttribute("p"))
 			return false;
 
-		if (!xmlVProportionNode->GetAttribute(wxString::Format("%d", i)).ToDouble(&value))
+		if (!xmlProportionEntryNode->GetAttribute("p").ToDouble(&value))
 			return false;
 
 		this->childVProportionArray[i] = float(value);
+		xmlProportionEntryNode = xmlProportionEntryNode->GetNext();
 	}
 
+	xmlProportionEntryNode = xmlHProportionNode->GetChildren();
 	for (int i = 0; i < this->childNodeMatrixCols; i++)
 	{
-		if (!xmlHProportionNode->HasAttribute(wxString::Format("%d", i)))
+		if (!xmlProportionEntryNode || !xmlProportionEntryNode->HasAttribute("p"))
 			return false;
 
-		if (!xmlHProportionNode->GetAttribute(wxString::Format("%d", i)).ToDouble(&value))
+		if (!xmlProportionEntryNode->GetAttribute("p").ToDouble(&value))
 			return false;
 
 		this->childHProportionArray[i] = float(value);
+		xmlProportionEntryNode = xmlProportionEntryNode->GetNext();
 	}
-
-	this->Collapse();
-	this->Split(this->childNodeMatrixRows, this->childNodeMatrixCols);
 
 	if (!xmlNode->GetChildren()->GetNext()->GetNext()->GetNext() && xmlNode->GetChildren()->GetNext()->GetNext()->GetNext()->GetName() != "Matrix")
 		return false;
@@ -145,12 +153,20 @@ wxXmlNode* icNode::SaveToXml() const
 	wxXmlNode* xmlVProportionNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "VProportionArray");
 	xmlNode->AddChild(xmlVProportionNode);
 	for (int i = 0; i < this->childNodeMatrixRows; i++)
-		xmlVProportionNode->AddAttribute(wxString::Format("%d", i), wxString::Format("%f", this->childVProportionArray[i]));
+	{
+		wxXmlNode* xmlProportionEntryNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "VProportion");
+		xmlProportionEntryNode->AddAttribute("p", wxString::Format("%f", this->childVProportionArray[i]));
+		xmlVProportionNode->AddChild(xmlProportionEntryNode);
+	}
 
 	wxXmlNode* xmlHProportionNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "HProportionArray");
 	xmlNode->AddChild(xmlHProportionNode);
 	for (int i = 0; i < this->childNodeMatrixCols; i++)
-		xmlVProportionNode->AddAttribute(wxString::Format("%d", i), wxString::Format("%f", this->childHProportionArray[i]));
+	{
+		wxXmlNode* xmlProportionEntryNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "HProportion");
+		xmlProportionEntryNode->AddAttribute("p", wxString::Format("%f", this->childHProportionArray[i]));
+		xmlHProportionNode->AddChild(xmlProportionEntryNode);
+	}
 
 	wxXmlNode* xmlMatrixNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "Matrix");
 	xmlNode->AddChild(xmlMatrixNode);
@@ -172,15 +188,15 @@ wxXmlNode* icNode::SaveToXml() const
 
 void icNode::Split(int rows, int cols)
 {
-	if (this->childNodeMatrix == nullptr)
+	if (this->childNodeMatrix == nullptr && rows > 0 && cols > 0)
 	{
 		this->childNodeMatrixRows = rows;
 		this->childNodeMatrixCols = cols;
 
-		this->childNodeMatrix = new icNode * *[this->childNodeMatrixRows];
+		this->childNodeMatrix = new icNode**[this->childNodeMatrixRows];
 		for (int i = 0; i < this->childNodeMatrixRows; i++)
 		{
-			this->childNodeMatrix[i] = new icNode * [this->childNodeMatrixCols];
+			this->childNodeMatrix[i] = new icNode*[this->childNodeMatrixCols];
 			for (int j = 0; j < this->childNodeMatrixCols; j++)
 			{
 				icNode* childNode = new icNode();

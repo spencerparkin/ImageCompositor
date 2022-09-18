@@ -64,7 +64,7 @@ bool icTransform::LoadFromXml(const wxXmlNode* xmlNode)
 	if (!this->translation.LoadFromXml(xmlNode->GetChildren()))
 		return false;
 
-	return false;
+	return true;
 }
 
 wxXmlNode* icTransform::SaveToXml(const wxString& name) const
