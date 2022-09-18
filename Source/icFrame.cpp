@@ -119,14 +119,17 @@ void icFrame::OnSaveProject(wxCommandEvent& event)
 
 void icFrame::OnCloseProject(wxCommandEvent& event)
 {
-	if (wxGetApp().project && wxGetApp().project->needsSaving)
+	if (wxGetApp().project)
 	{
-		int response = wxMessageBox("You have unsaved changes.  Save before closing?", "Save?", wxYES_NO | wxCANCEL | wxICON_QUESTION);
-		if (response == wxCANCEL)
-			return;
-		else if (response == wxYES)
-			if (!this->PerformSaveOperation())
+		if (wxGetApp().project->needsSaving)
+		{
+			int response = wxMessageBox("You have unsaved changes.  Save before closing?", "Save?", wxYES_NO | wxCANCEL | wxICON_QUESTION);
+			if (response == wxCANCEL)
 				return;
+			else if (response == wxYES)
+				if (!this->PerformSaveOperation())
+					return;
+		}
 
 		delete wxGetApp().project;
 		wxGetApp().project = nullptr;
