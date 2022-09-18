@@ -290,6 +290,8 @@ wxImage* icCanvas::GenerateImage()
 
 	this->SetCurrent(*this->renderContext);
 
+	// TODO: Can we do an off-screen render at a desired resolution?
+
 	icRectangle viewportRect, viewportWorldRect;
 	this->CalcViewportRectangles(viewportRect, viewportWorldRect);
 
