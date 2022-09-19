@@ -81,7 +81,7 @@ void icFrame::OnAbout(wxCommandEvent& event)
 
 void icFrame::OnOpenHelpPage(wxCommandEvent& event)
 {
-	wxString url = "https://github.com/spencerparkin/ImageCompositor";
+	wxString url = "https://youtu.be/AjAPeCf2vgI";
 	wxLaunchDefaultBrowser(url, wxBROWSER_NEW_WINDOW);
 }
 
