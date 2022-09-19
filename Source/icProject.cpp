@@ -2,6 +2,8 @@
 #include "icNode.h"
 #include "icCanvas.h"
 #include "icAnchor.h"
+#include <list>
+#include <set>
 
 icProject::icProject()
 {
@@ -76,11 +78,60 @@ icAnchor* icProject::Pick(const icVector& worldPoint)
 
 void icProject::UpdateLayoutIfNeeded()
 {
-	if (this->layoutDirty)
+	if (this->layoutDirty && this->rootNode)
 	{
 		this->rootNode->Layout(this->frameRect);
+
+		std::list<icNode*> nodeList;
+		this->rootNode->ForEachNode([&nodeList](icNode* node) -> bool {
+			nodeList.push_back(node);
+			return true;
+		});
+
+		std::set<int> processedSet;
+		while (nodeList.size() > 0)
+		{
+			std::list<icNode*>::iterator iter = nodeList.begin();
+			icNode* node = *iter;
+			nodeList.erase(iter);
+
+			if (node->matchId < 0)
+				processedSet.insert(node->id);
+			else
+			{
+				icNode* matchNode = this->FindNodeById(node->matchId);
+				if (matchNode)
+				{
+					if (processedSet.find(matchNode->id) == processedSet.end())
+						nodeList.push_back(node);
+					else
+					{
+						node->worldPolygon = matchNode->worldPolygon;
+						processedSet.insert(node->id);
+					}
+				}
+			}
+		}
+
 		this->layoutDirty = false;
 	}
+}
+
+icNode* icProject::FindNodeById(int id)
+{
+	icNode* foundNode = nullptr;
+	if (this->rootNode)
+	{
+		this->rootNode->ForEachNode([&foundNode, id](icNode* node) -> bool {
+			if (node->id == id)
+			{
+				foundNode = node;
+				return false;
+			}
+			return true;
+		});
+	}
+	return foundNode;
 }
 
 bool icProject::LoadFromXML(const wxXmlDocument& xmlDoc)

@@ -2,6 +2,7 @@
 
 #include "icRectangle.h"
 #include "icTransform.h"
+#include "icConvexPolygon.h"
 #include <wx/string.h>
 #include <wx/xml/xml.h>
 
@@ -29,7 +30,10 @@ public:
 	void Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect);
 	icAnchor* Pick(const icVector& worldPoint, float edgeThickness, const icAnchor* tentativeAnchor);
 	void AdjustProportionArray(float* proportionArray, int proportionArraySize, int i, float delta);
+	icNode* FindMasterNode();
 
+	int id;
+	int matchId;
 	icNode*** childNodeMatrix;
 	int childNodeMatrixRows;
 	int childNodeMatrixCols;
@@ -40,4 +44,5 @@ public:
 	float imageAspectRatio;
 	unsigned int texture;
 	icRectangle worldRect;
+	icConvexPolygon worldPolygon;
 };

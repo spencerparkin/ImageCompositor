@@ -2,12 +2,17 @@
 #include "icCanvas.h"
 #include "icAnchor.h"
 #include "icConvexPolygon.h"
+#include "icApp.h"
+#include "icProject.h"
 #include <wx/image.h>
 #include <gl/GLU.h>
 #include <vector>
 
 icNode::icNode()
 {
+	static int nextId = 0;
+	this->id = nextId++;
+	this->matchId = -1;
 	this->childNodeMatrix = nullptr;
 	this->childNodeMatrixRows = 0;
 	this->childNodeMatrixCols = 0;
@@ -34,6 +39,19 @@ bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
 	long intValue;
 
 	this->Collapse();
+
+	if (!xmlNode->HasAttribute("id") || !xmlNode->HasAttribute("matchId"))
+		return false;
+
+	if (!xmlNode->GetAttribute("id").ToLong(&intValue))
+		return false;
+
+	this->id = int(intValue);
+
+	if (!xmlNode->GetAttribute("matchId").ToLong(&intValue))
+		return false;
+
+	this->matchId = int(intValue);
 
 	if (!xmlNode->HasAttribute("imagePath") || !xmlNode->HasAttribute("imageAspectRatio"))
 		return false;
@@ -141,6 +159,8 @@ wxXmlNode* icNode::SaveToXml() const
 {
 	wxXmlNode* xmlNode = new wxXmlNode(wxXmlNodeType::wxXML_ELEMENT_NODE, "Node");
 
+	xmlNode->AddAttribute("id", wxString::Format("%d", this->id));
+	xmlNode->AddAttribute("matchId", wxString::Format("%d", this->matchId));
 	xmlNode->AddAttribute("imagePath", this->imagePath);
 	xmlNode->AddAttribute("imageAspectRatio", wxString::Format("%f", this->imageAspectRatio));
 	
@@ -314,6 +334,23 @@ void icNode::Layout(const icRectangle& worldRect)
 {
 	this->worldRect = worldRect;
 
+	icRectangle imageRect(this->worldRect);
+	imageRect.ExpandToMatchAspectRatio(this->imageAspectRatio);
+	imageRect.MakeConvexPolygon(this->worldPolygon);
+	icVector center = this->worldPolygon.CalcCenter();
+
+	icTransform toOriginTransform;
+	toOriginTransform.Identity();
+	toOriginTransform.translation = center * -1.0f;
+
+	icTransform fromOriginTransform;
+	fromOriginTransform.Identity();
+	fromOriginTransform.translation = center;
+
+	toOriginTransform.Transform(this->worldPolygon);
+	this->imageTransform.Transform(this->worldPolygon);
+	fromOriginTransform.Transform(this->worldPolygon);
+
 	float vLerpMin = 0.0f;
 	float vLerpMax = 0.0f;
 
@@ -369,32 +406,6 @@ void icNode::Render(const icRectangle& viewportRect, const icRectangle& viewport
 		glBindTexture(GL_TEXTURE_2D, this->texture);
 	}
 
-	icRectangle uvRect;
-	uvRect.min.x = 0.0f;
-	uvRect.min.y = 0.0f;
-	uvRect.max.x = 1.0f;
-	uvRect.max.y = 1.0f;
-
-	icRectangle imageRect(this->worldRect);
-	imageRect.ExpandToMatchAspectRatio(this->imageAspectRatio);
-	
-	icConvexPolygon polygon;
-	imageRect.MakeConvexPolygon(polygon);
-
-	icVector center = polygon.CalcCenter();
-	
-	icTransform toOriginTransform;
-	toOriginTransform.Identity();
-	toOriginTransform.translation = center * -1.0f;
-
-	icTransform fromOriginTransform;
-	fromOriginTransform.Identity();
-	fromOriginTransform.translation = center;
-
-	toOriginTransform.Transform(polygon);
-	this->imageTransform.Transform(polygon);
-	fromOriginTransform.Transform(polygon);
-
 	icRectangle clipRect;
 	clipRect.MakeSimilarlyNested(viewportWorldRect, this->worldRect, viewportRect);
 
@@ -411,31 +422,31 @@ void icNode::Render(const icRectangle& viewportRect, const icRectangle& viewport
 	{
 		glColor3f(1.0f, 1.0f, 1.0f);
 
-		glTexCoord2f(uvRect.min.x, uvRect.min.y);
-		glVertex2f(polygon.vertexArray[0].x, polygon.vertexArray[0].y);
+		glTexCoord2f(0.0f, 0.0f);
+		glVertex2f(this->worldPolygon.vertexArray[0].x, this->worldPolygon.vertexArray[0].y);
 
-		glTexCoord2f(uvRect.max.x, uvRect.min.y);
-		glVertex2f(polygon.vertexArray[1].x, polygon.vertexArray[1].y);
+		glTexCoord2f(1.0f, 0.0f);
+		glVertex2f(this->worldPolygon.vertexArray[1].x, this->worldPolygon.vertexArray[1].y);
 
-		glTexCoord2f(uvRect.max.x, uvRect.max.y);
-		glVertex2f(polygon.vertexArray[2].x, polygon.vertexArray[2].y);
+		glTexCoord2f(1.0f, 1.0f);
+		glVertex2f(this->worldPolygon.vertexArray[2].x, this->worldPolygon.vertexArray[2].y);
 
-		glTexCoord2f(uvRect.min.x, uvRect.max.y);
-		glVertex2f(polygon.vertexArray[3].x, polygon.vertexArray[3].y);
+		glTexCoord2f(0.0f, 1.0f);
+		glVertex2f(this->worldPolygon.vertexArray[3].x, this->worldPolygon.vertexArray[3].y);
 	}
 	else
 	{
 		glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex2f(polygon.vertexArray[0].x, polygon.vertexArray[0].y);
+		glVertex2f(this->worldPolygon.vertexArray[0].x, this->worldPolygon.vertexArray[0].y);
 
 		glColor3f(0.0f, 1.0f, 0.0f);
-		glVertex2f(polygon.vertexArray[1].x, polygon.vertexArray[1].y);
+		glVertex2f(this->worldPolygon.vertexArray[1].x, this->worldPolygon.vertexArray[1].y);
 
 		glColor3f(0.0f, 0.0f, 1.0f);
-		glVertex2f(polygon.vertexArray[2].x, polygon.vertexArray[2].y);
+		glVertex2f(this->worldPolygon.vertexArray[2].x, this->worldPolygon.vertexArray[2].y);
 
 		glColor3f(1.0f, 1.0f, 0.0f);
-		glVertex2f(polygon.vertexArray[3].x, polygon.vertexArray[3].y);
+		glVertex2f(this->worldPolygon.vertexArray[3].x, this->worldPolygon.vertexArray[3].y);
 	}
 
 	glEnd();
@@ -509,4 +520,15 @@ void icNode::AdjustProportionArray(float* proportionArray, int proportionArraySi
 		if (error != 0.0f)
 			proportionA += error;	// We could apply this anywhere, but let's just use the recently modified proportion.
 	}
+}
+
+icNode* icNode::FindMasterNode()
+{
+	icNode* masterNode = this;
+	while (masterNode->matchId >= 0)
+	{
+		masterNode = wxGetApp().project->FindNodeById(masterNode->matchId);
+		wxASSERT(masterNode != nullptr);
+	}
+	return masterNode;
 }

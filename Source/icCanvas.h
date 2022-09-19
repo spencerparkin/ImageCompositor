@@ -27,7 +27,10 @@ public:
 		ID_ContextMenu_SplitHorizontal,
 		ID_ContextMenu_SplitCustom,
 		ID_ContextMenu_Collapse,
-		ID_ContextMenu_ResetTransform
+		ID_ContextMenu_ResetTransform,
+		ID_ContextMenu_RememberNode,
+		ID_ContextMenu_MatchNode,
+		ID_ContextMenu_UnmatchNode
 	};
 
 	void OnPaint(wxPaintEvent& event);
@@ -40,6 +43,9 @@ public:
 	void OnContextMenu_SplitCustom(wxCommandEvent& event);
 	void OnContextMenu_Collapse(wxCommandEvent& event);
 	void OnContextMenu_ResetTransform(wxCommandEvent& event);
+	void OnContextMenu_RememberNode(wxCommandEvent& event);
+	void OnContextMenu_MatchNode(wxCommandEvent& event);
+	void OnContextMenu_UnmatchNode(wxCommandEvent& event);
 	void OnMouseWheel(wxMouseEvent& event);
 	void OnLeftMouseButtonDown(wxMouseEvent& event);
 	void OnLeftMouseButtonUp(wxMouseEvent& event);
@@ -55,4 +61,5 @@ public:
 	icAnchor* anchor;
 	bool dragging;
 	icVector dragStart;
+	int rememberedNodeId;
 };

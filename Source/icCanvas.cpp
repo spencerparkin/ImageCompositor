@@ -6,6 +6,7 @@
 #include "icNode.h"
 #include "icGenerateImageDialog.h"
 #include <wx/menu.h>
+#include <wx/msgdlg.h>
 #include <gl/GLU.h>
 
 int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
@@ -14,6 +15,7 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 {
 	this->anchor = nullptr;
 	this->dragging = false;
+	this->rememberedNodeId = -1;
 	this->renderContext = new wxGLContext(this);
 
 	this->Bind(wxEVT_PAINT, &icCanvas::OnPaint, this);
@@ -26,6 +28,9 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitCustom, this, ID_ContextMenu_SplitCustom);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_Collapse, this, ID_ContextMenu_Collapse);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_ResetTransform, this, ID_ContextMenu_ResetTransform);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_RememberNode, this, ID_ContextMenu_RememberNode);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_MatchNode, this, ID_ContextMenu_MatchNode);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_UnmatchNode, this, ID_ContextMenu_UnmatchNode);
 	this->Bind(wxEVT_MOUSEWHEEL, &icCanvas::OnMouseWheel, this);
 	this->Bind(wxEVT_LEFT_DOWN, &icCanvas::OnLeftMouseButtonDown, this);
 	this->Bind(wxEVT_LEFT_UP, &icCanvas::OnLeftMouseButtonUp, this);
@@ -136,14 +141,17 @@ void icCanvas::OnMouseWheel(wxMouseEvent& event)
 		icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 		if (nodeAnchor)
 		{
+			icNode* masterNode = nodeAnchor->node->FindMasterNode();
+
 			float wheelRotation = float(event.GetWheelRotation()) / float(event.GetWheelDelta());
 			float sensativity = 0.1f;
 
 			if (event.ShiftDown())
-				nodeAnchor->node->imageTransform.rotation += wheelRotation * sensativity;
+				masterNode->imageTransform.rotation += wheelRotation * sensativity;
 			else
-				nodeAnchor->node->imageTransform.scale += wheelRotation * sensativity;
+				masterNode->imageTransform.scale += wheelRotation * sensativity;
 
+			wxGetApp().project->layoutDirty = true;
 			this->Refresh();
 		}
 	}
@@ -204,6 +212,7 @@ void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
 		{
 			nodeAnchor->node->AssignImage(event.GetFiles()[0]);
 			wxGetApp().project->needsSaving = true;
+			wxGetApp().project->layoutDirty = true;
 			this->Refresh();
 		}
 	}
@@ -228,6 +237,11 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_Collapse, "Collapse", "Collapse the region split by the given edge."));
 			contextMenu.AppendSeparator();
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_ResetTransform, "Reset Transform", "Remove all transformations applied to the image in this region."));
+			contextMenu.AppendSeparator();
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_MatchNode, "Match Node", "Have this node match the remembered node."));
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_UnmatchNode, "Unmatch Node", "Have this node no longer match any other node."));
+			contextMenu.AppendSeparator();
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_RememberNode, "Remember Node", "Remember this node for a subsequent operation."));
 
 			bool isNodeAnchor = (dynamic_cast<icNodeAnchor*>(this->anchor) ? true : false);
 			bool isEdgeAnchor = (dynamic_cast<icEdgeAnchor*>(this->anchor) ? true : false);
@@ -248,6 +262,45 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 			this->Refresh();
 		}
 	}
+}
+
+void icCanvas::OnContextMenu_RememberNode(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+		this->rememberedNodeId = nodeAnchor->node->id;
+}
+
+void icCanvas::OnContextMenu_MatchNode(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor && nodeAnchor->node->id != this->rememberedNodeId)
+	{
+		// Don't allow the creation of a circular dependency.
+		icNode* node = wxGetApp().project->FindNodeById(this->rememberedNodeId);
+		while (node)
+		{
+			if (node->matchId == -1)
+				break;
+			
+			if (node->matchId == nodeAnchor->node->id)
+			{
+				wxMessageBox("Circular dependency prevented.", "Error", wxICON_ERROR, this);
+				return;
+			}
+
+			node = wxGetApp().project->FindNodeById(node->matchId);
+		}
+
+		nodeAnchor->node->matchId = this->rememberedNodeId;
+	}
+}
+
+void icCanvas::OnContextMenu_UnmatchNode(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+		nodeAnchor->node->matchId = -1;
 }
 
 void icCanvas::OnContextMenu_SplitVertical(wxCommandEvent& event)

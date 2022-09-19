@@ -16,6 +16,7 @@ public:
 	icVector CalcCenter() const;
 	float CalcArea() const;
 	bool ContainsPoint(const icVector& point) const;
+	void operator=(const icConvexPolygon& polygon);
 
 	std::vector<icVector> vertexArray;
 };

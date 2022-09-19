@@ -41,7 +41,8 @@ icNodeAnchor::icNodeAnchor(icNode* node)
 
 /*virtual*/ void icNodeAnchor::HandleDrag(const icVector& dragDelta)
 {
-	this->node->imageTransform.translation += dragDelta;
+	icNode* masterNode = this->node->FindMasterNode();
+	masterNode->imageTransform.translation += dragDelta;
 }
 
 /*virtual*/ wxStockCursor icNodeAnchor::GetDragCursor()

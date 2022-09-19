@@ -18,6 +18,7 @@ public:
 	void UpdateLayoutIfNeeded();
 	bool LoadFromXML(const wxXmlDocument& xmlDoc);
 	void SaveToXML(wxXmlDocument& xmlDoc) const;
+	icNode* FindNodeById(int id);
 
 	icNode* rootNode;
 	icRectangle frameRect;

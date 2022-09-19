@@ -34,3 +34,10 @@ bool icConvexPolygon::ContainsPoint(const icVector& point) const
 	//...
 	return false;
 }
+
+void icConvexPolygon::operator=(const icConvexPolygon& polygon)
+{
+	this->vertexArray.clear();
+	for (int i = 0; i < (signed)polygon.vertexArray.size(); i++)
+		this->vertexArray.push_back(polygon.vertexArray[i]);
+}
