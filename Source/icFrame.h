@@ -18,7 +18,8 @@ public:
 		ID_OpenProject,
 		ID_SaveProject,
 		ID_CloseProject,
-		ID_GenerateImage
+		ID_GenerateImage,
+		ID_OpenHelpPage
 	};
 
 	void OnExit(wxCommandEvent& event);
@@ -28,6 +29,7 @@ public:
 	void OnSaveProject(wxCommandEvent& event);
 	void OnCloseProject(wxCommandEvent& event);
 	void OnGenerateImage(wxCommandEvent& event);
+	void OnOpenHelpPage(wxCommandEvent& event);
 	void OnUpdateMenuItemUI(wxUpdateUIEvent& event);
 	void OnClose(wxCloseEvent& event);
 

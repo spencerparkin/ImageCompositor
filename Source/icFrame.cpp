@@ -11,6 +11,7 @@
 #include <wx/image.h>
 #include <wx/msgdlg.h>
 #include <wx/xml/xml.h>
+#include <wx/utils.h>
 
 icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxFrame(parent, wxID_ANY, "Image Compositor", pos, size)
 {
@@ -25,6 +26,8 @@ icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxF
 	fileMenu->Append(new wxMenuItem(fileMenu, ID_Exit, "Exit", "Close this application."));
 
 	wxMenu* helpMenu = new wxMenu();
+	helpMenu->Append(new wxMenuItem(helpMenu, ID_OpenHelpPage, "Open Help Page...", "Open the help page in your default browser."));
+	helpMenu->AppendSeparator();
 	helpMenu->Append(new wxMenuItem(helpMenu, ID_About, "About", "Show the about-box."));
 
 	wxMenuBar* menuBar = new wxMenuBar();
@@ -39,6 +42,7 @@ icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxF
 	this->Bind(wxEVT_MENU, &icFrame::OnSaveProject, this, ID_SaveProject);
 	this->Bind(wxEVT_MENU, &icFrame::OnCloseProject, this, ID_CloseProject);
 	this->Bind(wxEVT_MENU, &icFrame::OnGenerateImage, this, ID_GenerateImage);
+	this->Bind(wxEVT_MENU, &icFrame::OnOpenHelpPage, this, ID_OpenHelpPage);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_NewProject);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_OpenProject);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_SaveProject);
@@ -73,6 +77,12 @@ void icFrame::OnAbout(wxCommandEvent& event)
 	aboutDialogInfo.SetCopyright("Copyright (C) 2022 -- Spencer T. Parkin <SpencerTParkin@gmail.com>");
 
 	wxAboutBox(aboutDialogInfo);
+}
+
+void icFrame::OnOpenHelpPage(wxCommandEvent& event)
+{
+	wxString url = "https://github.com/spencerparkin/ImageCompositor";
+	wxLaunchDefaultBrowser(url, wxBROWSER_NEW_WINDOW);
 }
 
 void icFrame::OnNewProject(wxCommandEvent& event)
