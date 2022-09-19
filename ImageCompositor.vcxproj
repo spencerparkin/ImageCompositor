@@ -23,6 +23,7 @@
     <ClCompile Include="Source\icApp.cpp" />
     <ClCompile Include="Source\icCanvas.cpp" />
     <ClCompile Include="Source\icConvexPolygon.cpp" />
+    <ClCompile Include="Source\icCustomSplitDialog.cpp" />
     <ClCompile Include="Source\icFrame.cpp" />
     <ClCompile Include="Source\icGenerateImageDialog.cpp" />
     <ClCompile Include="Source\icNode.cpp" />
@@ -32,6 +33,7 @@
     <ClCompile Include="Source\icVector.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\icCustomSplitDialog.h" />
     <ClInclude Include="Source\icAnchor.h" />
     <ClInclude Include="Source\icApp.h" />
     <ClInclude Include="Source\icCanvas.h" />

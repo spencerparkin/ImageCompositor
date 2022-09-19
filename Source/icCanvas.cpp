@@ -5,8 +5,10 @@
 #include "icAnchor.h"
 #include "icNode.h"
 #include "icGenerateImageDialog.h"
+#include "icCustomSplitDialog.h"
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
+#include <wx/filedlg.h>
 #include <gl/GLU.h>
 
 int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
@@ -31,6 +33,7 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_RememberNode, this, ID_ContextMenu_RememberNode);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_MatchNode, this, ID_ContextMenu_MatchNode);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_UnmatchNode, this, ID_ContextMenu_UnmatchNode);
+	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_AssignImage, this, ID_ContextMenu_AssignImage);
 	this->Bind(wxEVT_MOUSEWHEEL, &icCanvas::OnMouseWheel, this);
 	this->Bind(wxEVT_LEFT_DOWN, &icCanvas::OnLeftMouseButtonDown, this);
 	this->Bind(wxEVT_LEFT_UP, &icCanvas::OnLeftMouseButtonUp, this);
@@ -230,6 +233,8 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 		{
 			wxMenu contextMenu;
 
+			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_AssignImage, "Assign Image", "Assign an image to this node.  Note that you can also use drag and drop."));
+			contextMenu.AppendSeparator();
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitVertical, "Split Vertical", "Split the region into an upper cell and a lower cell."));
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitHorizontal, "Split Horizontal", "Split the region into a left cell and a right cell."));
 			contextMenu.Append(new wxMenuItem(&contextMenu, ID_ContextMenu_SplitCustom, "Split Custom", "Split the region into a given matrix of cells."));
@@ -246,11 +251,15 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 			bool isNodeAnchor = (dynamic_cast<icNodeAnchor*>(this->anchor) ? true : false);
 			bool isEdgeAnchor = (dynamic_cast<icEdgeAnchor*>(this->anchor) ? true : false);
 
+			contextMenu.FindItem(ID_ContextMenu_AssignImage)->Enable(isNodeAnchor);
 			contextMenu.FindItem(ID_ContextMenu_SplitVertical)->Enable(isNodeAnchor);
 			contextMenu.FindItem(ID_ContextMenu_SplitHorizontal)->Enable(isNodeAnchor);
 			contextMenu.FindItem(ID_ContextMenu_SplitCustom)->Enable(isNodeAnchor);
 			contextMenu.FindItem(ID_ContextMenu_Collapse)->Enable(isEdgeAnchor);
 			contextMenu.FindItem(ID_ContextMenu_ResetTransform)->Enable(isNodeAnchor);
+			contextMenu.FindItem(ID_ContextMenu_RememberNode)->Enable(isNodeAnchor);
+			contextMenu.FindItem(ID_ContextMenu_MatchNode)->Enable(isNodeAnchor && this->rememberedNodeId >= 0);
+			contextMenu.FindItem(ID_ContextMenu_UnmatchNode)->Enable(isNodeAnchor && (dynamic_cast<icNodeAnchor*>(this->anchor))->node->matchId >= 0);
 
 			this->PopupMenu(&contextMenu, mousePoint);
 
@@ -319,8 +328,13 @@ void icCanvas::OnContextMenu_SplitHorizontal(wxCommandEvent& event)
 
 void icCanvas::OnContextMenu_SplitCustom(wxCommandEvent& event)
 {
-	// TODO: Get rows and cols form user using a modal dialog.
-	//       Make sure rows >= 1 && cols >= 1 and rows != cols if rows == 1.
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+	{
+		icCustomSplitDialog customSplitDlg(this);
+		if (wxID_OK == customSplitDlg.ShowModal())
+			nodeAnchor->node->Split(customSplitDlg.rows, customSplitDlg.cols);
+	}
 }
 
 void icCanvas::OnContextMenu_Collapse(wxCommandEvent& event)
@@ -335,6 +349,17 @@ void icCanvas::OnContextMenu_ResetTransform(wxCommandEvent& event)
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
 		nodeAnchor->node->imageTransform.Identity();
+}
+
+void icCanvas::OnContextMenu_AssignImage(wxCommandEvent& event)
+{
+	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
+	if (nodeAnchor)
+	{
+		wxFileDialog fileOpenDlg(this, "Open image file.", wxEmptyString, wxEmptyString, "Any file (*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+		if (fileOpenDlg.ShowModal() == wxID_OK)
+			nodeAnchor->node->AssignImage(fileOpenDlg.GetPath());
+	}
 }
 
 wxImage* icCanvas::GenerateImage(icGenerateImageDialog* generateImageDlg)

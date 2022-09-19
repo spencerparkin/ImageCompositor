@@ -30,7 +30,8 @@ public:
 		ID_ContextMenu_ResetTransform,
 		ID_ContextMenu_RememberNode,
 		ID_ContextMenu_MatchNode,
-		ID_ContextMenu_UnmatchNode
+		ID_ContextMenu_UnmatchNode,
+		ID_ContextMenu_AssignImage
 	};
 
 	void OnPaint(wxPaintEvent& event);
@@ -46,6 +47,7 @@ public:
 	void OnContextMenu_RememberNode(wxCommandEvent& event);
 	void OnContextMenu_MatchNode(wxCommandEvent& event);
 	void OnContextMenu_UnmatchNode(wxCommandEvent& event);
+	void OnContextMenu_AssignImage(wxCommandEvent& event);
 	void OnMouseWheel(wxMouseEvent& event);
 	void OnLeftMouseButtonDown(wxMouseEvent& event);
 	void OnLeftMouseButtonUp(wxMouseEvent& event);

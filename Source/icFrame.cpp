@@ -90,7 +90,7 @@ void icFrame::OnOpenProject(wxCommandEvent& event)
 {
 	if (!wxGetApp().project)
 	{
-		wxFileDialog fileOpenDlg(this, "Open proejct file.", wxEmptyString, wxEmptyString, "IC Project (*.icproj)|*.icproj", wxFD_OPEN);
+		wxFileDialog fileOpenDlg(this, "Open project file.", wxEmptyString, wxEmptyString, "IC Project (*.icproj)|*.icproj", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 		if (fileOpenDlg.ShowModal() == wxID_OK)
 		{
 			wxGetApp().project = new icProject();

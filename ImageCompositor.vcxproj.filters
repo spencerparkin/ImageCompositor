@@ -40,6 +40,9 @@
     <ClCompile Include="Source\icGenerateImageDialog.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\icCustomSplitDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\icApp.h">
@@ -73,6 +76,9 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="Source\icGenerateImageDialog.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\icCustomSplitDialog.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>

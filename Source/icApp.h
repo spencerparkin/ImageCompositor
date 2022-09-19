@@ -6,6 +6,10 @@
 class icFrame;
 class icProject;
 
+// Note that if I had to do this all over again, I might try to use
+// a graph data-structure instead of a tree.  A tree is a graph, of course,
+// but not every graph is a tree.  I would then use the stencil buffer instead
+// of the scissor feature for clipping.
 class icApp : public wxApp
 {
 public:
