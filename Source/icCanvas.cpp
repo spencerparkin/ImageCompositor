@@ -4,6 +4,7 @@
 #include "icProject.h"
 #include "icAnchor.h"
 #include "icNode.h"
+#include "icGenerateImageDialog.h"
 #include <wx/menu.h>
 #include <gl/GLU.h>
 
@@ -283,37 +284,41 @@ void icCanvas::OnContextMenu_ResetTransform(wxCommandEvent& event)
 		nodeAnchor->node->imageTransform.Identity();
 }
 
-wxImage* icCanvas::GenerateImage()
+wxImage* icCanvas::GenerateImage(icGenerateImageDialog* generateImageDlg)
 {
 	if (!wxGetApp().project)
 		return nullptr;
 
 	this->SetCurrent(*this->renderContext);
 
+	if (generateImageDlg->dumpFramebuffer)
+	{
+		icRectangle viewportRect, viewportWorldRect;
+		this->CalcViewportRectangles(viewportRect, viewportWorldRect);
+
+		icRectangle subViewportRect;
+		subViewportRect.MakeSimilarlyNested(viewportWorldRect, wxGetApp().project->frameRect, viewportRect);
+
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+
+		GLuint x = MAX(GLuint(subViewportRect.min.x), 0);
+		GLuint y = MAX(GLuint(subViewportRect.min.y), 0);
+		GLsizei width = MIN(GLuint(subViewportRect.CalcWidth()), GLuint(viewport[2]));
+		GLsizei height = MIN(GLuint(subViewportRect.CalcHeight()), GLuint(viewport[3]));
+
+		wxImage* image = new wxImage(wxSize(width, height));
+
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image->GetData());
+
+		this->FlipImageUpsideDown(image);
+
+		return image;
+	}
+	
 	// TODO: Can we do an off-screen render at a desired resolution?
-
-	icRectangle viewportRect, viewportWorldRect;
-	this->CalcViewportRectangles(viewportRect, viewportWorldRect);
-
-	icRectangle subViewportRect;
-	subViewportRect.MakeSimilarlyNested(viewportWorldRect, wxGetApp().project->frameRect, viewportRect);
-
-	GLint viewport[4];
-	glGetIntegerv(GL_VIEWPORT, viewport);
-
-	GLuint x = MAX(GLuint(subViewportRect.min.x), 0);
-	GLuint y = MAX(GLuint(subViewportRect.min.y), 0);
-	GLsizei width = MIN(GLuint(subViewportRect.CalcWidth()), GLuint(viewport[2]));
-	GLsizei height = MIN(GLuint(subViewportRect.CalcHeight()), GLuint(viewport[3]));
-
-	wxImage* image = new wxImage(wxSize(width, height));
-
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image->GetData());
-
-	this->FlipImageUpsideDown(image);
-
-	return image;
+	return nullptr;
 }
 
 /*static*/ void icCanvas::FlipImageUpsideDown(wxImage* image)

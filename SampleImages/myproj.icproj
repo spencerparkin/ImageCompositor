@@ -12,8 +12,8 @@
       <VProportion p="1.000000"/>
     </VProportionArray>
     <HProportionArray>
-      <HProportion p="0.168727"/>
-      <HProportion p="0.831273"/>
+      <HProportion p="0.218135"/>
+      <HProportion p="0.781865"/>
     </HProportionArray>
     <Matrix>
       <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\BabyGerrafe.jpg" imageAspectRatio="1.473373" rows="0" cols="0" i="0" j="0">
@@ -32,8 +32,8 @@
           <VProportion p="1.000000"/>
         </VProportionArray>
         <HProportionArray>
-          <HProportion p="0.804879"/>
-          <HProportion p="0.195121"/>
+          <HProportion p="0.529566"/>
+          <HProportion p="0.470434"/>
         </HProportionArray>
         <Matrix>
           <Node imagePath="" imageAspectRatio="1.000000" rows="2" cols="1" i="0" j="0">
@@ -41,16 +41,16 @@
               <translation x="0.000000" y="0.000000"/>
             </imageTransform>
             <VProportionArray>
-              <VProportion p="0.182370"/>
-              <VProportion p="0.817630"/>
+              <VProportion p="0.437947"/>
+              <VProportion p="0.562053"/>
             </VProportionArray>
             <HProportionArray>
               <HProportion p="1.000000"/>
             </HProportionArray>
             <Matrix>
               <Node imagePath="H:\git_repos\ImageCompositor\SampleImages\Shark.jpg" imageAspectRatio="1.611111" rows="0" cols="0" i="0" j="0">
-                <imageTransform scale="1.200000" rotation="0.000000">
-                  <translation x="-0.036407" y="-1.715654"/>
+                <imageTransform scale="1.700000" rotation="0.000000">
+                  <translation x="-4.052635" y="-2.364741"/>
                 </imageTransform>
                 <VProportionArray/>
                 <HProportionArray/>
@@ -61,8 +61,8 @@
                   <translation x="0.000000" y="0.000000"/>
                 </imageTransform>
                 <VProportionArray>
-                  <VProportion p="0.765799"/>
-                  <VProportion p="0.234201"/>
+                  <VProportion p="0.495130"/>
+                  <VProportion p="0.504870"/>
                 </VProportionArray>
                 <HProportionArray>
                   <HProportion p="1.000000"/>
@@ -93,8 +93,8 @@
               <translation x="0.000000" y="0.000000"/>
             </imageTransform>
             <VProportionArray>
-              <VProportion p="0.500000"/>
-              <VProportion p="0.500000"/>
+              <VProportion p="0.616473"/>
+              <VProportion p="0.383527"/>
             </VProportionArray>
             <HProportionArray>
               <HProportion p="1.000000"/>

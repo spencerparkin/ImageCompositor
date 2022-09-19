@@ -2,6 +2,7 @@
 #include "icCanvas.h"
 #include "icApp.h"
 #include "icProject.h"
+#include "icGenerateImageDialog.h"
 #include <wx/menu.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
@@ -167,15 +168,24 @@ bool icFrame::PerformSaveOperation()
 
 void icFrame::OnGenerateImage(wxCommandEvent& event)
 {
-	wxFileDialog fileSaveDlg(this, "Save composite image file.", wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-	if (fileSaveDlg.ShowModal() == wxID_OK)
+	icGenerateImageDialog generateImageDlg(this);
+	if (generateImageDlg.ShowModal() == wxID_OK)
 	{
-		wxImage* image = this->canvas->GenerateImage();
-
-		wxString filePath = fileSaveDlg.GetPath();
-		image->SaveFile(filePath);
-
-		delete image;
+		wxFileDialog fileSaveDlg(this, "Save composite image file.", wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+		if (fileSaveDlg.ShowModal() == wxID_OK)
+		{
+			wxImage* image = this->canvas->GenerateImage(&generateImageDlg);
+			if (!image)
+				wxMessageBox("Failed to generate image!", "Error", wxICON_ERROR, this);
+			else
+			{
+				wxString filePath = fileSaveDlg.GetPath();
+				if (!image->SaveFile(filePath))
+					wxMessageBox("Failed to save image!", "Error", wxICON_ERROR, this);
+				
+				delete image;
+			}
+		}
 	}
 }
 

@@ -24,6 +24,7 @@
     <ClCompile Include="Source\icCanvas.cpp" />
     <ClCompile Include="Source\icConvexPolygon.cpp" />
     <ClCompile Include="Source\icFrame.cpp" />
+    <ClCompile Include="Source\icGenerateImageDialog.cpp" />
     <ClCompile Include="Source\icNode.cpp" />
     <ClCompile Include="Source\icProject.cpp" />
     <ClCompile Include="Source\icRectangle.cpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="Source\icCanvas.h" />
     <ClInclude Include="Source\icConvexPolygon.h" />
     <ClInclude Include="Source\icFrame.h" />
+    <ClInclude Include="Source\icGenerateImageDialog.h" />
     <ClInclude Include="Source\icNode.h" />
     <ClInclude Include="Source\icProject.h" />
     <ClInclude Include="Source\icRectangle.h" />

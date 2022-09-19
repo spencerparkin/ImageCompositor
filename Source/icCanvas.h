@@ -11,6 +11,7 @@
 		a ^= b; \
 	} while(0)
 
+class icGenerateImageDialog;
 class icRectangle;
 class icAnchor;
 
@@ -46,7 +47,7 @@ public:
 	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
 	void UpdateAnchor(const wxPoint& mousePoint);
 	icVector MousePointToWorld(const wxPoint& mousePoint);
-	wxImage* GenerateImage();
+	wxImage* GenerateImage(icGenerateImageDialog* generateImageDlg);
 	static void FlipImageUpsideDown(wxImage* image);
 
 	static int attributeList[];
