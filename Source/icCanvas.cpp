@@ -342,36 +342,50 @@ wxImage* icCanvas::GenerateImage(icGenerateImageDialog* generateImageDlg)
 	if (!wxGetApp().project)
 		return nullptr;
 
+	wxBusyCursor busyCursor;
+
 	this->SetCurrent(*this->renderContext);
 
-	if (generateImageDlg->dumpFramebuffer)
+	icRectangle viewportRect, viewportWorldRect;
+	this->CalcViewportRectangles(viewportRect, viewportWorldRect);
+
+	icRectangle subViewportRect;
+	subViewportRect.MakeSimilarlyNested(viewportWorldRect, wxGetApp().project->frameRect, viewportRect);
+
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	GLuint x = MAX(GLuint(subViewportRect.min.x), 0);
+	GLuint y = MAX(GLuint(subViewportRect.min.y), 0);
+	GLsizei width = MIN(GLuint(subViewportRect.CalcWidth()), GLuint(viewport[2]));
+	GLsizei height = MIN(GLuint(subViewportRect.CalcHeight()), GLuint(viewport[3]));
+
+	wxImage* image = new wxImage(wxSize(width, height));
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image->GetData());
+
+	this->FlipImageUpsideDown(image);
+
+	// Note that we can't just try to do some sort of off-screen render into a buffer with the desired dimensions,
+	// because that will also cause a layout change to occur, which could give the user something undesriable.
+	if (!generateImageDlg->useFramebufferDimensions)
 	{
-		icRectangle viewportRect, viewportWorldRect;
-		this->CalcViewportRectangles(viewportRect, viewportWorldRect);
+		if (!generateImageDlg->doNotCrop)
+		{
+			float aspectRatio = float(generateImageDlg->imageWidth) / float(generateImageDlg->imageHeight);
+			icRectangle subImageRect = subViewportRect;
+			subImageRect.ShrinkToMatchAspectRatio(aspectRatio);
+			wxSize adjustedSize(int(subImageRect.CalcWidth()), int(subImageRect.CalcHeight()));
+			wxPoint adjustedCorner(-int(subImageRect.min.x / 2.0f), -int(subImageRect.min.y / 2.0f));
+			image->Resize(adjustedSize, adjustedCorner, 0, 0, 0);
+		}
 
-		icRectangle subViewportRect;
-		subViewportRect.MakeSimilarlyNested(viewportWorldRect, wxGetApp().project->frameRect, viewportRect);
-
-		GLint viewport[4];
-		glGetIntegerv(GL_VIEWPORT, viewport);
-
-		GLuint x = MAX(GLuint(subViewportRect.min.x), 0);
-		GLuint y = MAX(GLuint(subViewportRect.min.y), 0);
-		GLsizei width = MIN(GLuint(subViewportRect.CalcWidth()), GLuint(viewport[2]));
-		GLsizei height = MIN(GLuint(subViewportRect.CalcHeight()), GLuint(viewport[3]));
-
-		wxImage* image = new wxImage(wxSize(width, height));
-
-		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image->GetData());
-
-		this->FlipImageUpsideDown(image);
-
-		return image;
+		image->Rescale(generateImageDlg->imageWidth, generateImageDlg->imageHeight, wxIMAGE_QUALITY_HIGH);
 	}
+
+	return image;
 	
-	// TODO: Can we do an off-screen render at a desired resolution?
-	return nullptr;
 }
 
 /*static*/ void icCanvas::FlipImageUpsideDown(wxImage* image)

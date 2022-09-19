@@ -41,8 +41,8 @@
               <translation x="0.000000" y="0.000000"/>
             </imageTransform>
             <VProportionArray>
-              <VProportion p="0.706119"/>
-              <VProportion p="0.293881"/>
+              <VProportion p="0.664882"/>
+              <VProportion p="0.335118"/>
             </VProportionArray>
             <HProportionArray>
               <HProportion p="1.000000"/>
