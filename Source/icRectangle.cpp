@@ -102,15 +102,15 @@ void icRectangle::ShrinkToMatchAspectRatio(float aspectRatio)
 
 	if (currentAspectRatio < aspectRatio)
 	{
-		float deltaX = (this->CalcHeight() - this->CalcWidth() / aspectRatio) / 2.0f;
-		this->min.x += deltaX;
-		this->max.x -= deltaX;
+		float deltaY = (this->CalcHeight() - this->CalcWidth() / aspectRatio) / 2.0f;
+		this->min.y += deltaY;
+		this->max.y -= deltaY;
 	}
 	else if (currentAspectRatio > aspectRatio)
 	{
-		float deltaY = (this->CalcWidth() - this->CalcHeight() * aspectRatio) / 2.0f;
-		this->min.y += deltaY;
-		this->max.y -= deltaY;
+		float deltaX = (this->CalcWidth() - this->CalcHeight() * aspectRatio) / 2.0f;
+		this->min.x += deltaX;
+		this->max.x -= deltaX;
 	}
 }
 

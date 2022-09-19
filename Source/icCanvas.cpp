@@ -398,12 +398,25 @@ wxImage* icCanvas::GenerateImage(icGenerateImageDialog* generateImageDlg)
 	{
 		if (!generateImageDlg->doNotCrop)
 		{
-			float aspectRatio = float(generateImageDlg->imageWidth) / float(generateImageDlg->imageHeight);
-			icRectangle subImageRect = subViewportRect;
-			subImageRect.ShrinkToMatchAspectRatio(aspectRatio);
-			wxSize adjustedSize(int(subImageRect.CalcWidth()), int(subImageRect.CalcHeight()));
-			wxPoint adjustedCorner(-int(subImageRect.min.x / 2.0f), -int(subImageRect.min.y / 2.0f));
-			image->Resize(adjustedSize, adjustedCorner, 0, 0, 0);
+			float desiredAspectRatio = float(generateImageDlg->imageWidth) / float(generateImageDlg->imageHeight);
+			
+			icRectangle supImageRect;
+			supImageRect.min.x = 0.0f;
+			supImageRect.min.y = 0.0f;
+			supImageRect.max.x = image->GetWidth();
+			supImageRect.max.y = image->GetHeight();
+
+			icRectangle subImageRect = supImageRect;
+			subImageRect.ShrinkToMatchAspectRatio(desiredAspectRatio);
+
+			wxRect subImageRectangle;
+			subImageRectangle.x = int(subImageRect.min.x);
+			subImageRectangle.y = int(subImageRect.min.y);
+			subImageRectangle.width = int(subImageRect.CalcWidth());
+			subImageRectangle.height = int(subImageRect.CalcHeight());
+
+			wxImage subImage = image->GetSubImage(subImageRectangle);
+			*image = subImage;
 		}
 
 		image->Rescale(generateImageDlg->imageWidth, generateImageDlg->imageHeight, wxIMAGE_QUALITY_HIGH);
