@@ -73,6 +73,7 @@ bool icApp::Undo()
 	delete this->frame->canvas->anchor;
 	this->frame->canvas->anchor = nullptr;
 	this->frame->canvas->Refresh();
+	this->project->needsSaving = true;
 	return true;
 }
 
@@ -88,6 +89,7 @@ bool icApp::Redo()
 	delete this->frame->canvas->anchor;
 	this->frame->canvas->anchor = nullptr;
 	this->frame->canvas->Refresh();
+	this->project->needsSaving = true;
 	return true;
 }
 
