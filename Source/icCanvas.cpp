@@ -17,6 +17,7 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 {
 	this->anchor = nullptr;
 	this->dragging = false;
+	this->contextMenuOpen = false;
 	this->rememberedNodeId = -1;
 	this->renderContext = new wxGLContext(this);
 
@@ -25,6 +26,7 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_MOTION, &icCanvas::OnMouseMotion, this);
 	this->Bind(wxEVT_DROP_FILES, &icCanvas::OnFilesDropped, this);
 	this->Bind(wxEVT_CONTEXT_MENU, &icCanvas::OnContextMenu, this);
+	this->Bind(wxEVT_LEAVE_WINDOW, &icCanvas::OnMouseLeaveWindow, this);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitVertical, this, ID_ContextMenu_SplitVertical);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitHorizontal, this, ID_ContextMenu_SplitHorizontal);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitCustom, this, ID_ContextMenu_SplitCustom);
@@ -191,6 +193,7 @@ void icCanvas::OnLeftMouseButtonDown(wxMouseEvent& event)
 {
 	if (wxGetApp().project && this->anchor)
 	{
+		this->CaptureMouse();
 		this->dragStart = this->MousePointToWorld(event.GetPosition());
 		this->dragging = true;
 	}
@@ -198,10 +201,24 @@ void icCanvas::OnLeftMouseButtonDown(wxMouseEvent& event)
 
 void icCanvas::OnLeftMouseButtonUp(wxMouseEvent& event)
 {
-	this->dragging = false;
+	if (this->dragging)
+	{
+		this->dragging = false;
+		this->ReleaseMouse();
+	}
 
 	if (wxGetApp().project)
 		wxGetApp().project->needsSaving = true;
+}
+
+void icCanvas::OnMouseLeaveWindow(wxMouseEvent& event)
+{
+	if (!this->dragging && !this->contextMenuOpen)
+	{
+		delete this->anchor;
+		this->anchor = nullptr;
+		this->Refresh();
+	}
 }
 
 void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
@@ -261,7 +278,9 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 			contextMenu.FindItem(ID_ContextMenu_MatchNode)->Enable(isNodeAnchor && this->rememberedNodeId >= 0);
 			contextMenu.FindItem(ID_ContextMenu_UnmatchNode)->Enable(isNodeAnchor && (dynamic_cast<icNodeAnchor*>(this->anchor))->node->matchId >= 0);
 
+			this->contextMenuOpen = true;
 			this->PopupMenu(&contextMenu, mousePoint);
+			this->contextMenuOpen = false;
 
 			wxGetApp().project->needsSaving = true;
 			wxGetApp().project->layoutDirty = true;

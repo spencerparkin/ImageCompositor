@@ -38,6 +38,7 @@ public:
 	void OnSize(wxSizeEvent& event);
 	void OnMouseMotion(wxMouseEvent& event);
 	void OnFilesDropped(wxDropFilesEvent& event);
+	void OnMouseLeaveWindow(wxMouseEvent& event);
 	void OnContextMenu(wxContextMenuEvent& event);
 	void OnContextMenu_SplitVertical(wxCommandEvent& event);
 	void OnContextMenu_SplitHorizontal(wxCommandEvent& event);
@@ -62,6 +63,7 @@ public:
 	wxGLContext* renderContext;
 	icAnchor* anchor;
 	bool dragging;
+	bool contextMenuOpen;
 	icVector dragStart;
 	int rememberedNodeId;
 };

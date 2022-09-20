@@ -92,6 +92,7 @@ void icFrame::OnNewProject(wxCommandEvent& event)
 
 	wxGetApp().project = new icProject();
 	wxGetApp().projectFilePath = "";
+	this->SetTitle("Image Compositor -- [Untitled]");
 
 	this->Refresh();
 }
@@ -110,6 +111,7 @@ void icFrame::OnOpenProject(wxCommandEvent& event)
 			{
 				wxGetApp().project->LoadFromXML(xmlDoc);
 				wxGetApp().projectFilePath = fileOpenDlg.GetPath();
+				this->SetTitle("Image Compositor -- [" + wxFileNameFromPath(wxGetApp().projectFilePath) + "]");
 			}
 			else
 			{
@@ -145,6 +147,7 @@ void icFrame::OnCloseProject(wxCommandEvent& event)
 		delete wxGetApp().project;
 		wxGetApp().project = nullptr;
 		wxGetApp().projectFilePath = "";
+		this->SetTitle("Image Compositor");
 
 		this->Refresh();
 	}
@@ -173,6 +176,7 @@ bool icFrame::PerformSaveOperation()
 	}
 
 	wxGetApp().project->needsSaving = false;
+	this->SetTitle("Image Compositor -- [" + wxFileNameFromPath(wxGetApp().projectFilePath) + "]");
 	return true;
 }
 
