@@ -46,6 +46,12 @@ icNode* icNode::Clone() const
 		for (int j = 0; j < this->childNodeMatrixCols; j++)
 			node->childNodeMatrix[i][j] = this->childNodeMatrix[i][j]->Clone();
 
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
+		node->childVProportionArray[i] = this->childVProportionArray[i];
+
+	for (int j = 0; j < this->childNodeMatrixCols; j++)
+		node->childHProportionArray[j] = this->childHProportionArray[j];
+
 	return node;
 }
 
