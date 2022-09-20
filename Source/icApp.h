@@ -1,5 +1,6 @@
 #pragma once
 
+#include "icTextureCache.h"
 #include <wx/setup.h>
 #include <wx/app.h>
 
@@ -22,6 +23,7 @@ public:
 	icFrame* frame;
 	icProject* project;
 	wxString projectFilePath;
+	icTextureCache textureCache;
 };
 
 wxDECLARE_APP(icApp);

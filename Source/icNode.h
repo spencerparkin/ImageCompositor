@@ -14,7 +14,6 @@ public:
 	icNode();
 	virtual ~icNode();
 
-	// TODO: This could be part of an undo/redo system.
 	icNode* Clone() const;
 
 	bool LoadFromXml(const wxXmlNode* xmlNode);
@@ -31,6 +30,7 @@ public:
 	icAnchor* Pick(const icVector& worldPoint, float edgeThickness, const icAnchor* tentativeAnchor);
 	void AdjustProportionArray(float* proportionArray, int proportionArraySize, int i, float delta);
 	icNode* FindMasterNode();
+	void UpdateTexture();
 
 	int id;
 	int matchId;

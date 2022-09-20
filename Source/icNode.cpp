@@ -4,7 +4,9 @@
 #include "icConvexPolygon.h"
 #include "icApp.h"
 #include "icProject.h"
+#include "icFrame.h"
 #include <wx/image.h>
+#include <wx/msgdlg.h>
 #include <gl/GLU.h>
 #include <vector>
 
@@ -30,7 +32,21 @@ icNode::icNode()
 
 icNode* icNode::Clone() const
 {
-	return nullptr;
+	// Copy only those members that define the node.
+	// The other members are always a function of the definitive members.
+	icNode* node = new icNode();
+	node->id = this->id;
+	node->matchId = this->matchId;
+	node->Split(this->childNodeMatrixRows, this->childNodeMatrixCols);
+	node->imageTransform = this->imageTransform;
+	node->imagePath = this->imagePath;
+	node->imageAspectRatio = this->imageAspectRatio;
+	
+	for (int i = 0; i < this->childNodeMatrixRows; i++)
+		for (int j = 0; j < this->childNodeMatrixCols; j++)
+			node->childNodeMatrix[i][j] = this->childNodeMatrix[i][j]->Clone();
+
+	return node;
 }
 
 bool icNode::LoadFromXml(const wxXmlNode* xmlNode)
@@ -270,62 +286,24 @@ void icNode::ZoomUVs(float zoomFactor)
 
 void icNode::AssignImage(const wxString& imagePath)
 {
-	wxBusyCursor busyCursor;
-
-	if (this->texture != GL_INVALID_VALUE)
-	{
-		glDeleteTextures(1, &this->texture);
-		this->texture = GL_INVALID_VALUE;
-	}
-
-	this->imagePath = imagePath;
-
-	wxImage image;
-	if (!image.LoadFile(this->imagePath))
-		this->imagePath = "";
+	if (!wxFileExists(imagePath))
+		wxMessageBox("The file (" + imagePath + ") does not exist.", "Error", wxICON_ERROR, wxGetApp().frame->canvas);
 	else
+		this->imagePath = imagePath;
+}
+
+void icNode::UpdateTexture()
+{
+	if (this->imagePath.Len() > 0)
 	{
-		glGenTextures(1, &this->texture);
-		if (this->texture != GL_INVALID_VALUE)
+		icTextureEntry entry = wxGetApp().textureCache.GrabTexture(this->imagePath);
+		this->texture = entry.texture;
+		this->imageAspectRatio = entry.aspectRatio;
+
+		if (this->texture == GL_INVALID_VALUE)
 		{
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glBindTexture(GL_TEXTURE_2D, this->texture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-			GLuint imageWidth = image.GetWidth();
-			GLuint imageHeight = image.GetHeight();
-			GLubyte* imageBuffer = image.GetData();
-			GLuint bytesPerPixel = 3;
-			GLuint bytesPerTexel = 4;
-			GLubyte* textureBuffer = new GLubyte[imageWidth * imageHeight * bytesPerTexel];
-
-			// We have to flip the image for OpenGL.
-			for (GLuint i = 0; i < imageHeight; i++)
-			{
-				for (GLuint j = 0; j < imageWidth; j++)
-				{
-					GLubyte* pixel = &imageBuffer[(imageHeight - 1 - i) * imageWidth * bytesPerPixel + j * bytesPerPixel];
-					GLubyte* texel = &textureBuffer[i * imageWidth * bytesPerTexel + j * bytesPerTexel];
-
-					texel[0] = pixel[0];
-					texel[1] = pixel[1];
-					texel[2] = pixel[2];
-					texel[3] = 0;
-				}
-			}
-
-#if 0 // Probably don't need to build mip-maps.
-			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, imageWidth, imageHeight, GL_RGBA, GL_UNSIGNED_BYTE, textureBuffer);
-#else
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureBuffer);
-#endif
-
-			delete[] textureBuffer;
-
-			this->imageAspectRatio = float(imageWidth) / float(imageHeight);
+			wxMessageBox("Failed to load image: " + this->imagePath, "Error", wxICON_ERROR, wxGetApp().frame->canvas);
+			this->imagePath = "";
 		}
 	}
 }

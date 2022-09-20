@@ -21,6 +21,14 @@ icProject::icProject()
 	delete this->rootNode;
 }
 
+icProject* icProject::Clone() const
+{
+	icProject* project = new icProject();
+	project->rootNode = this->rootNode ? this->rootNode->Clone() : nullptr;
+	project->frameRect = this->frameRect;
+	return project;
+}
+
 void icProject::Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect)
 {
 	if (this->rootNode)
@@ -80,6 +88,11 @@ void icProject::UpdateLayoutIfNeeded()
 {
 	if (this->layoutDirty && this->rootNode)
 	{
+		this->rootNode->ForEachNode([](icNode* node) -> bool {
+			node->UpdateTexture();
+			return true;
+		});
+
 		this->rootNode->Layout(this->frameRect);
 
 		std::list<icNode*> nodeList;

@@ -29,6 +29,7 @@
     <ClCompile Include="Source\icNode.cpp" />
     <ClCompile Include="Source\icProject.cpp" />
     <ClCompile Include="Source\icRectangle.cpp" />
+    <ClCompile Include="Source\icTextureCache.cpp" />
     <ClCompile Include="Source\icTransform.cpp" />
     <ClCompile Include="Source\icVector.cpp" />
   </ItemGroup>
@@ -43,6 +44,7 @@
     <ClInclude Include="Source\icNode.h" />
     <ClInclude Include="Source\icProject.h" />
     <ClInclude Include="Source\icRectangle.h" />
+    <ClInclude Include="Source\icTextureCache.h" />
     <ClInclude Include="Source\icTransform.h" />
     <ClInclude Include="Source\icVector.h" />
   </ItemGroup>

@@ -13,6 +13,7 @@ public:
 	icProject();
 	virtual ~icProject();
 
+	icProject* Clone() const;
 	void Render(const icRectangle& viewportRect, const icRectangle& viewportWorldRect);
 	icAnchor* Pick(const icVector& worldPoint);
 	void UpdateLayoutIfNeeded();
