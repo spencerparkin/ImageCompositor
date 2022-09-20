@@ -12,6 +12,7 @@
 #include <wx/msgdlg.h>
 #include <wx/xml/xml.h>
 #include <wx/utils.h>
+#include <wx/accel.h>
 
 icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxFrame(parent, wxID_ANY, "Image Compositor", pos, size)
 {
@@ -25,6 +26,10 @@ icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxF
 	fileMenu->AppendSeparator();
 	fileMenu->Append(new wxMenuItem(fileMenu, ID_Exit, "Exit", "Close this application."));
 
+	wxMenu* editMenu = new wxMenu();
+	editMenu->Append(new wxMenuItem(editMenu, ID_Undo, "Undo (Ctlr + Z)", "Undo the last edit, if any."));
+	editMenu->Append(new wxMenuItem(editMenu, ID_Redo, "Redo (Ctrl + Y)", "Redo an edit, if any."));
+
 	wxMenu* helpMenu = new wxMenu();
 	helpMenu->Append(new wxMenuItem(helpMenu, ID_OpenHelpPage, "Open Help Page...", "Open the help page in your default browser."));
 	helpMenu->AppendSeparator();
@@ -32,6 +37,7 @@ icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxF
 
 	wxMenuBar* menuBar = new wxMenuBar();
 	menuBar->Append(fileMenu, "File");
+	menuBar->Append(editMenu, "Edit");
 	menuBar->Append(helpMenu, "Help");
 	this->SetMenuBar(menuBar);
 
@@ -43,11 +49,15 @@ icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxF
 	this->Bind(wxEVT_MENU, &icFrame::OnCloseProject, this, ID_CloseProject);
 	this->Bind(wxEVT_MENU, &icFrame::OnGenerateImage, this, ID_GenerateImage);
 	this->Bind(wxEVT_MENU, &icFrame::OnOpenHelpPage, this, ID_OpenHelpPage);
+	this->Bind(wxEVT_MENU, &icFrame::OnUndo, this, ID_Undo);
+	this->Bind(wxEVT_MENU, &icFrame::OnRedo, this, ID_Redo);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_NewProject);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_OpenProject);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_SaveProject);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_CloseProject);
 	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_GenerateImage);
+	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_Undo);
+	this->Bind(wxEVT_UPDATE_UI, &icFrame::OnUpdateMenuItemUI, this, ID_Redo);
 	this->Bind(wxEVT_CLOSE_WINDOW, &icFrame::OnClose, this);
 
 	this->SetStatusBar(new wxStatusBar(this));
@@ -56,6 +66,13 @@ icFrame::icFrame(wxWindow* parent, const wxPoint& pos, const wxSize& size) : wxF
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->Add(this->canvas, 1, wxGROW);
 	this->SetSizer(sizer);
+
+	wxAcceleratorEntry entries[2];
+	entries[0].Set(wxACCEL_CTRL, (int)'Z', ID_Undo);
+	entries[1].Set(wxACCEL_CTRL, (int)'Y', ID_Redo);
+
+	wxAcceleratorTable accelTable(2, entries);
+	this->SetAcceleratorTable(accelTable);
 }
 
 /*virtual*/ icFrame::~icFrame()
@@ -85,6 +102,16 @@ void icFrame::OnOpenHelpPage(wxCommandEvent& event)
 	wxLaunchDefaultBrowser(url, wxBROWSER_NEW_WINDOW);
 }
 
+void icFrame::OnUndo(wxCommandEvent& event)
+{
+	wxGetApp().Undo();
+}
+
+void icFrame::OnRedo(wxCommandEvent& event)
+{
+	wxGetApp().Redo();
+}
+
 void icFrame::OnNewProject(wxCommandEvent& event)
 {
 	if (wxGetApp().project)
@@ -92,6 +119,8 @@ void icFrame::OnNewProject(wxCommandEvent& event)
 
 	wxGetApp().project = new icProject();
 	wxGetApp().projectFilePath = "";
+	wxGetApp().ClearHistory();
+	wxGetApp().ClearFuture();
 	this->SetTitle("Image Compositor -- [Untitled]");
 
 	this->Refresh();
@@ -111,6 +140,8 @@ void icFrame::OnOpenProject(wxCommandEvent& event)
 			{
 				wxGetApp().project->LoadFromXML(xmlDoc);
 				wxGetApp().projectFilePath = fileOpenDlg.GetPath();
+				wxGetApp().ClearHistory();
+				wxGetApp().ClearFuture();
 				this->SetTitle("Image Compositor -- [" + wxFileNameFromPath(wxGetApp().projectFilePath) + "]");
 			}
 			else
@@ -222,6 +253,16 @@ void icFrame::OnUpdateMenuItemUI(wxUpdateUIEvent& event)
 		case ID_OpenProject:
 		{
 			event.Enable(wxGetApp().project == nullptr);
+			break;
+		}
+		case ID_Undo:
+		{
+			event.Enable(wxGetApp().CanUndo());
+			break;
+		}
+		case ID_Redo:
+		{
+			event.Enable(wxGetApp().CanRedo());
 			break;
 		}
 	}

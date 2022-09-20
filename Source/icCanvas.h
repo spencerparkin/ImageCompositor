@@ -3,6 +3,7 @@
 #include "icVector.h"
 #include <wx/glcanvas.h>
 #include <wx/image.h>
+#include <wx/timer.h>
 
 #define SWAP(a, b) \
 	do { \
@@ -52,6 +53,8 @@ public:
 	void OnMouseWheel(wxMouseEvent& event);
 	void OnLeftMouseButtonDown(wxMouseEvent& event);
 	void OnLeftMouseButtonUp(wxMouseEvent& event);
+	void OnCaptureLost(wxMouseCaptureLostEvent& event);
+	void OnMouseWheelTimer(wxTimerEvent& event);
 
 	void CalcViewportRectangles(icRectangle& viewportRect, icRectangle& viewportWorldRect);
 	void UpdateAnchor(const wxPoint& mousePoint);
@@ -63,7 +66,10 @@ public:
 	wxGLContext* renderContext;
 	icAnchor* anchor;
 	bool dragging;
+	bool dragModifyOccurred;
 	bool contextMenuOpen;
+	bool contextMenuModifyOccurred;
 	icVector dragStart;
 	int rememberedNodeId;
+	wxTimer mouseWheelTimer;
 };

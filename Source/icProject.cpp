@@ -24,6 +24,7 @@ icProject::icProject()
 icProject* icProject::Clone() const
 {
 	icProject* project = new icProject();
+	delete project->rootNode;
 	project->rootNode = this->rootNode ? this->rootNode->Clone() : nullptr;
 	project->frameRect = this->frameRect;
 	return project;

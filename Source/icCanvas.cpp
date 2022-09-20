@@ -9,6 +9,7 @@
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
 #include <wx/filedlg.h>
+#include <wx/log.h>
 #include <gl/GLU.h>
 
 int icCanvas::attributeList[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
@@ -17,7 +18,9 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 {
 	this->anchor = nullptr;
 	this->dragging = false;
+	this->dragModifyOccurred = false;
 	this->contextMenuOpen = false;
+	this->contextMenuModifyOccurred = false;
 	this->rememberedNodeId = -1;
 	this->renderContext = new wxGLContext(this);
 
@@ -27,6 +30,7 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_DROP_FILES, &icCanvas::OnFilesDropped, this);
 	this->Bind(wxEVT_CONTEXT_MENU, &icCanvas::OnContextMenu, this);
 	this->Bind(wxEVT_LEAVE_WINDOW, &icCanvas::OnMouseLeaveWindow, this);
+	this->Bind(wxEVT_MOUSE_CAPTURE_LOST, &icCanvas::OnCaptureLost, this);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitVertical, this, ID_ContextMenu_SplitVertical);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitHorizontal, this, ID_ContextMenu_SplitHorizontal);
 	this->Bind(wxEVT_MENU, &icCanvas::OnContextMenu_SplitCustom, this, ID_ContextMenu_SplitCustom);
@@ -41,6 +45,8 @@ icCanvas::icCanvas(wxWindow* parent) : wxGLCanvas(parent, wxID_ANY, attributeLis
 	this->Bind(wxEVT_LEFT_UP, &icCanvas::OnLeftMouseButtonUp, this);
 
 	this->DragAcceptFiles(true);
+
+	this->mouseWheelTimer.Bind(wxEVT_TIMER, &icCanvas::OnMouseWheelTimer, this);
 }
 
 /*virtual*/ icCanvas::~icCanvas()
@@ -146,6 +152,11 @@ void icCanvas::OnMouseWheel(wxMouseEvent& event)
 		icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 		if (nodeAnchor)
 		{
+			if (!this->mouseWheelTimer.IsRunning())
+				wxGetApp().BeginModify();
+
+			this->mouseWheelTimer.StartOnce(500);
+
 			icNode* masterNode = nodeAnchor->node->FindMasterNode();
 
 			float wheelRotation = float(event.GetWheelRotation()) / float(event.GetWheelDelta());
@@ -162,6 +173,11 @@ void icCanvas::OnMouseWheel(wxMouseEvent& event)
 	}
 }
 
+void icCanvas::OnMouseWheelTimer(wxTimerEvent& event)
+{
+	wxGetApp().EndModify(true);
+}
+
 void icCanvas::OnMouseMotion(wxMouseEvent& event)
 {
 	if (wxGetApp().project)
@@ -172,6 +188,7 @@ void icCanvas::OnMouseMotion(wxMouseEvent& event)
 			icVector dragDelta = dragEnd - this->dragStart;
 			this->anchor->HandleDrag(dragDelta);
 			this->dragStart = dragEnd;
+			this->dragModifyOccurred = true;
 			wxGetApp().project->layoutDirty = true;
 		}
 		else
@@ -193,9 +210,11 @@ void icCanvas::OnLeftMouseButtonDown(wxMouseEvent& event)
 {
 	if (wxGetApp().project && this->anchor)
 	{
+		wxGetApp().BeginModify();
 		this->CaptureMouse();
 		this->dragStart = this->MousePointToWorld(event.GetPosition());
 		this->dragging = true;
+		this->dragModifyOccurred = false;
 	}
 }
 
@@ -205,10 +224,22 @@ void icCanvas::OnLeftMouseButtonUp(wxMouseEvent& event)
 	{
 		this->dragging = false;
 		this->ReleaseMouse();
+		wxGetApp().EndModify(this->dragModifyOccurred);
+		this->dragModifyOccurred = false;
 	}
 
 	if (wxGetApp().project)
 		wxGetApp().project->needsSaving = true;
+}
+
+void icCanvas::OnCaptureLost(wxMouseCaptureLostEvent& event)
+{
+	if (this->dragging)
+	{
+		this->dragging = false;
+		wxGetApp().EndModify(this->dragModifyOccurred);
+		this->dragModifyOccurred = false;
+	}
 }
 
 void icCanvas::OnMouseLeaveWindow(wxMouseEvent& event)
@@ -230,9 +261,11 @@ void icCanvas::OnFilesDropped(wxDropFilesEvent& event)
 		icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 		if (nodeAnchor)
 		{
+			wxGetApp().BeginModify();
 			nodeAnchor->node->AssignImage(event.GetFiles()[0]);
 			wxGetApp().project->needsSaving = true;
 			wxGetApp().project->layoutDirty = true;
+			wxGetApp().EndModify(true);
 			this->Refresh();
 		}
 	}
@@ -278,9 +311,13 @@ void icCanvas::OnContextMenu(wxContextMenuEvent& event)
 			contextMenu.FindItem(ID_ContextMenu_MatchNode)->Enable(isNodeAnchor && this->rememberedNodeId >= 0);
 			contextMenu.FindItem(ID_ContextMenu_UnmatchNode)->Enable(isNodeAnchor && (dynamic_cast<icNodeAnchor*>(this->anchor))->node->matchId >= 0);
 
+			wxGetApp().BeginModify();
+			this->contextMenuModifyOccurred = false;
 			this->contextMenuOpen = true;
 			this->PopupMenu(&contextMenu, mousePoint);
 			this->contextMenuOpen = false;
+			wxGetApp().EndModify(this->contextMenuModifyOccurred);
+			this->contextMenuModifyOccurred = false;
 
 			wxGetApp().project->needsSaving = true;
 			wxGetApp().project->layoutDirty = true;
@@ -321,6 +358,7 @@ void icCanvas::OnContextMenu_MatchNode(wxCommandEvent& event)
 		}
 
 		nodeAnchor->node->matchId = this->rememberedNodeId;
+		this->contextMenuModifyOccurred = true;
 	}
 }
 
@@ -328,21 +366,30 @@ void icCanvas::OnContextMenu_UnmatchNode(wxCommandEvent& event)
 {
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
+	{
 		nodeAnchor->node->matchId = -1;
+		this->contextMenuModifyOccurred = true;
+	}
 }
 
 void icCanvas::OnContextMenu_SplitVertical(wxCommandEvent& event)
 {
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
+	{
 		nodeAnchor->node->Split(2, 1);
+		this->contextMenuModifyOccurred = true;
+	}
 }
 
 void icCanvas::OnContextMenu_SplitHorizontal(wxCommandEvent& event)
 {
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
+	{
 		nodeAnchor->node->Split(1, 2);
+		this->contextMenuModifyOccurred = true;
+	}
 }
 
 void icCanvas::OnContextMenu_SplitCustom(wxCommandEvent& event)
@@ -352,7 +399,10 @@ void icCanvas::OnContextMenu_SplitCustom(wxCommandEvent& event)
 	{
 		icCustomSplitDialog customSplitDlg(this);
 		if (wxID_OK == customSplitDlg.ShowModal())
+		{
 			nodeAnchor->node->Split(customSplitDlg.rows, customSplitDlg.cols);
+			this->contextMenuModifyOccurred = true;
+		}
 	}
 }
 
@@ -360,14 +410,20 @@ void icCanvas::OnContextMenu_Collapse(wxCommandEvent& event)
 {
 	icEdgeAnchor* edgeAnchor = dynamic_cast<icEdgeAnchor*>(this->anchor);
 	if (edgeAnchor)
+	{
 		edgeAnchor->node->Collapse();
+		this->contextMenuModifyOccurred = true;
+	}
 }
 
 void icCanvas::OnContextMenu_ResetTransform(wxCommandEvent& event)
 {
 	icNodeAnchor* nodeAnchor = dynamic_cast<icNodeAnchor*>(this->anchor);
 	if (nodeAnchor)
+	{
 		nodeAnchor->node->imageTransform.Identity();
+		this->contextMenuModifyOccurred = true;
+	}
 }
 
 void icCanvas::OnContextMenu_AssignImage(wxCommandEvent& event)
@@ -377,7 +433,10 @@ void icCanvas::OnContextMenu_AssignImage(wxCommandEvent& event)
 	{
 		wxFileDialog fileOpenDlg(this, "Open image file.", wxEmptyString, wxEmptyString, "Any file (*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 		if (fileOpenDlg.ShowModal() == wxID_OK)
+		{
 			nodeAnchor->node->AssignImage(fileOpenDlg.GetPath());
+			this->contextMenuModifyOccurred = true;
+		}
 	}
 }
 
