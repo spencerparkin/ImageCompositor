@@ -134,14 +134,14 @@ void icFrame::OnOpenProject(wxCommandEvent& event)
 		if (fileOpenDlg.ShowModal() == wxID_OK)
 		{
 			wxGetApp().project = new icProject();
-			
+			wxGetApp().ClearHistory();
+			wxGetApp().ClearFuture();
+
 			wxXmlDocument xmlDoc;
 			if (xmlDoc.Load(fileOpenDlg.GetPath()))
 			{
 				wxGetApp().project->LoadFromXML(xmlDoc);
 				wxGetApp().projectFilePath = fileOpenDlg.GetPath();
-				wxGetApp().ClearHistory();
-				wxGetApp().ClearFuture();
 				this->SetTitle("Image Compositor -- [" + wxFileNameFromPath(wxGetApp().projectFilePath) + "]");
 			}
 			else
@@ -178,6 +178,8 @@ void icFrame::OnCloseProject(wxCommandEvent& event)
 		delete wxGetApp().project;
 		wxGetApp().project = nullptr;
 		wxGetApp().projectFilePath = "";
+		wxGetApp().ClearHistory();
+		wxGetApp().ClearFuture();
 		this->SetTitle("Image Compositor");
 
 		this->Refresh();
