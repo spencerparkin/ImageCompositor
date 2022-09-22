@@ -1,5 +1,9 @@
 #include "icGenerateImageDialog.h"
+#include "icApp.h"
 #include "icCanvas.h"
+#include "icFrame.h"
+#include "icProject.h"
+#include "icRectangle.h"
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/button.h>
@@ -120,10 +124,14 @@ void icGenerateImageDialog::OnDumpFramebufferChanged(wxCommandEvent& event)
 
 	if (this->useFramebufferDimensionsCheckbox->IsChecked())
 	{
-		GLint viewport[4];
-		glGetIntegerv(GL_VIEWPORT, viewport);
-		this->imageWidth = viewport[2];
-		this->imageHeight = viewport[3];
+		icRectangle viewportRect, viewportWorldRect;
+		wxGetApp().frame->canvas->CalcViewportRectangles(viewportRect, viewportWorldRect);
+
+		icRectangle imageRect;
+		imageRect.MakeSimilarlyNested(viewportWorldRect, wxGetApp().project->frameRect, viewportRect);
+
+		this->imageWidth = int(imageRect.CalcWidth());
+		this->imageHeight = int(imageRect.CalcHeight());
 		this->TransferDataToWindow();
 	}
 
